@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#004884">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <title>ANI Campo - Canal del Dique</title>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <strong>ANI Campo</strong>
+            <div style="font-size: 12px;">Canal del Dique - Cartagena</div>
+        </div>
+        <div>
+            <span class="status-indicator" id="connectionStatus"></span>
+            <span id="connectionText" style="font-size: 12px;"></span>
+        </div>
+    </div>
+
+    <div id="syncStatus" class="sync-status" style="display: none;"></div>
+
+    <!-- Sección Información Básica -->
+    <div id="infoBasica" class="section active">
+        <div class="form-section">
+            <div class="form-title">📋 Información Básica</div>
+            <input type="text" id="lugar" placeholder="Lugar específico en Cartagena *" value="Cartagena" required>
+            <input type="date" id="fechaSalida" required>
+            <input type="date" id="fechaRegreso" required>
+            <textarea id="objeto" placeholder="Objeto del desplazamiento *" required></textarea>
+            <input type="text" id="participantes" placeholder="Participantes (separar con comas)">
+        </div>
+    </div>
+
+    <!-- Sección Actividades -->
+    <div id="actividades" class="section">
+        <div class="form-section">
+            <div class="form-title">📝 Registrar Actividad</div>
+            <input type="text" id="actividadTitulo" placeholder="Título de la actividad">
+            <input type="datetime-local" id="actividadFecha">
+            <textarea id="actividadDescripcion" placeholder="Descripción detallada"></textarea>
+            <input type="file" id="actividadFoto" accept="image/*" capture="environment" multiple>
+            <button class="btn btn-primary" onclick="guardarActividad()">Agregar Actividad</button>
+        </div>
+        <div id="listaActividades"></div>
+    </div>
+
+    <!-- Sección Compromisos -->
+    <div id="compromisos" class="section">
+        <div class="form-section">
+            <div class="form-title">🎯 Nuevo Compromiso</div>
+            <input type="text" id="compromisoDescripcion" placeholder="Descripción del compromiso">
+            <select id="compromisoResponsable">
+                <option value="">Seleccionar responsable...</option>
+                <option value="ANI">ANI</option>
+                <option value="Concesionario">Concesionario</option>
+                <option value="Interventoría">Interventoría</option>
+                <option value="Alcaldía">Alcaldía</option>
+                <option value="Gobernación">Gobernación</option>
+                <option value="Comunidad">Comunidad</option>
+                <option value="Ministerio">Ministerio</option>
+            </select>
+            <input type="date" id="compromisoFecha">
+            <select id="compromisoPrioridad">
+                <option value="alta">Prioridad Alta</option>
+                <option value="media">Prioridad Media</option>
+                <option value="baja">Prioridad Baja</option>
+            </select>
+            <button class="btn btn-primary" onclick="guardarCompromiso()">Agregar Compromiso</button>
+        </div>
+        <div id="listaCompromisos"></div>
+    </div>
+
+    <!-- Sección Guardar -->
+    <div id="guardar" class="section">
+        <div class="form-section">
+            <div class="form-title">💾 Opciones de Guardado</div>
+            <div id="resumen"></div>
+            <button class="btn btn-success" onclick="guardarInforme()">💾 Guardar Localmente</button>
+            <button class="btn btn-primary" onclick="sincronizar()">☁️ Sincronizar</button>
+            <button class="btn btn-secondary" onclick="exportarJSON()">📥 Descargar JSON</button>
+        </div>
+    </div>
+
+<!-- Menú flotante -->
+<div class="floating-menu">
+    <button class="menu-btn active" onclick="cambiarSeccion('infoBasica', this)">
+        📋<br>Info
+    </button>
+    <button class="menu-btn" onclick="cambiarSeccion('actividades', this)">
+        📝<br>Actividades
+    </button>
+    <button class="menu-btn" onclick="cambiarSeccion('compromisos', this)">
+        🎯<br>Compromisos
+    </button>
+    <button class="menu-btn" onclick="cambiarSeccion('guardar', this)">
+        💾<br>Guardar
+    </button>
+</div>
+<!-- Agregar ANTES de <script src="app.js"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
