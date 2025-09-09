@@ -1,7 +1,8 @@
 {
   "name": "ANI Campo - Canal del Dique",
   "short_name": "ANI Campo",
-  "start_url": "/",
+  "scope": "/APP_Informes_Campo_ANI/",
+  "start_url": "/APP_Informes_Campo_ANI/",
   "display": "standalone",
   "background_color": "#004884",
   "theme_color": "#004884",
@@ -14,4 +15,5 @@
     }
 
   ]
+
 }
