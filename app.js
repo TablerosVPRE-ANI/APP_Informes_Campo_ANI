@@ -65,11 +65,12 @@ function cambiarSeccion(seccion, elemento) {
     }
 }
 
-// Guardar actividad
+// Guardar actividad con manejo de imágenes
 function guardarActividad() {
     const titulo = document.getElementById('actividadTitulo').value.trim();
     const fecha = document.getElementById('actividadFecha').value;
     const descripcion = document.getElementById('actividadDescripcion').value.trim();
+    const fotosInput = document.getElementById('actividadFoto');
     
     if (!titulo || !fecha) {
         mostrarNotificacion('⚠️ Por favor complete título y fecha', 'warning');
@@ -80,19 +81,95 @@ function guardarActividad() {
         id: Date.now(),
         titulo: titulo,
         fecha: fecha,
-        descripcion: descripcion
+        descripcion: descripcion,
+        fotos: []
     };
     
-    informe.actividades.push(actividad);
-    guardarBorrador();
-    actualizarListaActividades();
+    // Procesar imágenes si hay
+    if (fotosInput.files && fotosInput.files.length > 0) {
+        const cantidadFotos = fotosInput.files.length;
+        
+        // Procesar cada imagen
+        Array.from(fotosInput.files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Guardar imagen como base64 (para modo offline)
+                actividad.fotos.push({
+                    nombre: file.name,
+                    tipo: file.type,
+                    tamano: file.size,
+                    datos: e.target.result // base64
+                });
+                
+                // Si es la última imagen, guardar la actividad
+                if (actividad.fotos.length === cantidadFotos) {
+                    informe.actividades.push(actividad);
+                    guardarBorrador();
+                    actualizarListaActividades();
+                    mostrarNotificacion(`✅ Actividad agregada con ${cantidadFotos} foto(s)`, 'success');
+                    
+                    // Limpiar formulario
+                    document.getElementById('actividadTitulo').value = '';
+                    document.getElementById('actividadFecha').value = '';
+                    document.getElementById('actividadDescripcion').value = '';
+                    document.getElementById('actividadFoto').value = '';
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    } else {
+        // Sin fotos, guardar directamente
+        informe.actividades.push(actividad);
+        guardarBorrador();
+        actualizarListaActividades();
+        mostrarNotificacion('✅ Actividad agregada', 'success');
+        
+        // Limpiar formulario
+        document.getElementById('actividadTitulo').value = '';
+        document.getElementById('actividadFecha').value = '';
+        document.getElementById('actividadDescripcion').value = '';
+    }
+}
+
+// Actualizar visualización de actividades con fotos
+function actualizarListaActividades() {
+    const lista = document.getElementById('listaActividades');
     
-    // Limpiar formulario
-    document.getElementById('actividadTitulo').value = '';
-    document.getElementById('actividadFecha').value = '';
-    document.getElementById('actividadDescripcion').value = '';
+    if (informe.actividades.length === 0) {
+        lista.innerHTML = '<div class="form-section"><p style="color: #666; text-align: center;">No hay actividades registradas</p></div>';
+        return;
+    }
     
-    mostrarNotificacion('✅ Actividad agregada', 'success');
+    let html = '<div class="form-section"><div class="form-title">Actividades Registradas (' + 
+               informe.actividades.length + ')</div>';
+    
+    informe.actividades.forEach(act => {
+        const fechaFormateada = act.fecha ? new Date(act.fecha).toLocaleString('es-CO', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : 'Sin fecha';
+        
+        html += `
+            <div class="actividad-item" style="position: relative;">
+                <button onclick="eliminarActividad(${act.id})" 
+                        style="position: absolute; right: 5px; top: 5px; 
+                               background: #ff4444; color: white; border: none; 
+                               border-radius: 50%; width: 25px; height: 25px; 
+                               cursor: pointer; font-size: 16px;">×</button>
+                <strong>${act.titulo}</strong><br>
+                <small>📅 ${fechaFormateada}</small><br>
+                <p style="margin-top: 5px;">${act.descripcion || 'Sin descripción'}</p>
+                ${act.fotos && act.fotos.length > 0 ? 
+                    `<p style="color: #004884; font-size: 12px;">📷 ${act.fotos.length} foto(s) adjunta(s)</p>` : ''}
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    lista.innerHTML = html;
 }
 
 // Guardar compromiso
@@ -601,4 +678,5 @@ document.addEventListener('DOMContentLoaded', () => {
 // Prevenir pérdida de datos al cerrar
 window.addEventListener('beforeunload', (e) => {
     guardarBorrador();
+
 });
