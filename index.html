@@ -87,20 +87,25 @@
 <!-- Menú flotante -->
 <div class="floating-menu">
     <button class="menu-btn active" onclick="cambiarSeccion('infoBasica', this)">
-        📋<br>Info
+        <span style="font-size: 24px;">📋</span>
+        <span>Info</span>
     </button>
     <button class="menu-btn" onclick="cambiarSeccion('actividades', this)">
-        📝<br>Actividades
+        <span style="font-size: 24px;">📝</span>
+        <span>Actividades</span>
     </button>
     <button class="menu-btn" onclick="cambiarSeccion('compromisos', this)">
-        🎯<br>Compromisos
+        <span style="font-size: 24px;">🎯</span>
+        <span>Compromisos</span>
     </button>
     <button class="menu-btn" onclick="cambiarSeccion('guardar', this)">
-        💾<br>Guardar
+        <span style="font-size: 24px;">💾</span>
+        <span>Guardar</span>
     </button>
 </div>
 <!-- Agregar ANTES de <script src="app.js"></script> -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
