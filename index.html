@@ -34,18 +34,33 @@
         </div>
     </div>
 
-    <!-- Sección Actividades -->
-    <div id="actividades" class="section">
-        <div class="form-section">
-            <div class="form-title">📝 Registrar Actividad</div>
-            <input type="text" id="actividadTitulo" placeholder="Título de la actividad">
-            <input type="datetime-local" id="actividadFecha">
-            <textarea id="actividadDescripcion" placeholder="Descripción detallada"></textarea>
-            <input type="file" id="actividadFoto" accept="image/*" capture="environment" multiple>
-            <button class="btn btn-primary" onclick="guardarActividad()">Agregar Actividad</button>
+<!-- Sección Actividades -->
+<div id="actividades" class="section">
+    <div class="form-section">
+        <div class="form-title">📝 Registrar Actividad</div>
+        <input type="text" id="actividadTitulo" placeholder="Título de la actividad">
+        <input type="datetime-local" id="actividadFecha">
+        <textarea id="actividadDescripcion" placeholder="Descripción detallada"></textarea>
+        
+        <!-- ACTUALIZAR ESTA PARTE -->
+        <div style="margin: 10px 0;">
+            <label style="font-size: 14px; color: #666; display: block; margin-bottom: 8px;">
+                📷 Agregar evidencias (fotos)
+            </label>
+            <input type="file" 
+                   id="actividadFoto" 
+                   accept="image/*" 
+                   multiple
+                   style="width: 100%; padding: 10px; border: 2px dashed #004884; border-radius: 6px; background: #f0f8ff;">
         </div>
-        <div id="listaActividades"></div>
+        <p style="font-size: 12px; color: #666; margin: 5px 0;">
+            Toca para seleccionar de galería o tomar foto nueva
+        </p>
+        
+        <button class="btn btn-primary" onclick="guardarActividad()">Agregar Actividad</button>
     </div>
+    <div id="listaActividades"></div>
+</div>
 
     <!-- Sección Compromisos -->
     <div id="compromisos" class="section">
@@ -109,3 +124,4 @@
 </body>
 
 </html>
+
