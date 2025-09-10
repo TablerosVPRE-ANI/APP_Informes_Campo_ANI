@@ -22,17 +22,42 @@
 
     <div id="syncStatus" class="sync-status" style="display: none;"></div>
 
-    <!-- Sección Información Básica -->
-    <div id="infoBasica" class="section active">
-        <div class="form-section">
-            <div class="form-title">📋 Información Básica</div>
-            <input type="text" id="lugar" placeholder="Lugar específico en Cartagena *" value="Cartagena" required>
-            <input type="date" id="fechaSalida" required>
-            <input type="date" id="fechaRegreso" required>
-            <textarea id="objeto" placeholder="Objeto del desplazamiento *" required></textarea>
-            <input type="text" id="participantes" placeholder="Participantes (separar con comas)">
+<!-- Sección Información Básica -->
+<div id="infoBasica" class="section active">
+    <div class="form-section">
+        <div class="form-title">📋 Información Básica</div>
+        
+        <!-- AGREGAR ESTA NUEVA SECCIÓN DE PERFIL GIT -->
+        <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #004884;">
+            <label style="font-weight: bold; color: #004884; display: block; margin-bottom: 10px;">
+                Seleccione su Grupo Interno de Trabajo (GIT) *
+            </label>
+            <select id="perfilGIT" required style="background: white; font-size: 16px; padding: 12px;">
+                <option value="">-- Seleccionar GIT --</option>
+                <option value="social">GIT Social</option>
+                <option value="predial">GIT Predial</option>
+                <option value="juridico_predial">GIT Jurídico Predial</option>
+                <option value="ambiental">GIT Ambiental</option>
+                <option value="riesgos">GIT Riesgos</option>
+            </select>
         </div>
+        
+        <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">
+            Nombre del funcionario *
+        </label>
+        <input type="text" id="nombreFuncionario" placeholder="Nombre completo" required>
+        
+        <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">
+            Lugar específico *
+        </label>
+        <input type="text" id="lugar" placeholder="Lugar específico en Cartagena" value="Cartagena" required>
+        
+        <input type="date" id="fechaSalida" required>
+        <input type="date" id="fechaRegreso" required>
+        <textarea id="objeto" placeholder="Objeto del desplazamiento *" required></textarea>
+        <input type="text" id="participantes" placeholder="Otros participantes (separar con comas)">
     </div>
+</div>
 
 <!-- Sección Actividades -->
 <div id="actividades" class="section">
@@ -124,4 +149,5 @@
 </body>
 
 </html>
+
 
