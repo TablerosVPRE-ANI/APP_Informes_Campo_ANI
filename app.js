@@ -11,10 +11,12 @@ if (typeof window !== 'undefined' && window.supabase) {
 } else {
     console.log('⚠️ Supabase no disponible - trabajando offline');
 }
-// Estado de la aplicación
+// Estado de la aplicación - ACTUALIZAR
 let informe = {
     id: Date.now(),
     proyecto: 'Canal del Dique',
+    perfilGIT: '',  // <-- NUEVO
+    nombreFuncionario: '',  // <-- NUEVO
     lugar: 'Cartagena',
     fechaSalida: '',
     fechaRegreso: '',
@@ -25,7 +27,7 @@ let informe = {
     estado: 'borrador',
     fechaCreacion: new Date().toISOString(),
     ultimaModificacion: new Date().toISOString()
-};
+}
 
 // Verificar conexión
 function checkConnection() {
@@ -306,14 +308,18 @@ function actualizarListaCompromisos() {
     lista.innerHTML = html;
 }
 
-// Guardar borrador
+// Actualizar función guardarBorrador
 function guardarBorrador() {
+    const perfilGIT = document.getElementById('perfilGIT');
+    const nombreFuncionario = document.getElementById('nombreFuncionario');
     const lugar = document.getElementById('lugar');
     const fechaSalida = document.getElementById('fechaSalida');
     const fechaRegreso = document.getElementById('fechaRegreso');
     const objeto = document.getElementById('objeto');
     const participantes = document.getElementById('participantes');
     
+    if (perfilGIT) informe.perfilGIT = perfilGIT.value;
+    if (nombreFuncionario) informe.nombreFuncionario = nombreFuncionario.value;
     if (lugar) informe.lugar = lugar.value || 'Cartagena';
     if (fechaSalida) informe.fechaSalida = fechaSalida.value;
     if (fechaRegreso) informe.fechaRegreso = fechaRegreso.value;
@@ -335,11 +341,34 @@ function guardarBorrador() {
         mostrarNotificacion('Error al guardar borrador', 'error');
     }
 }
-
+// Nueva función para mostrar el perfil seleccionado
+function mostrarPerfilSeleccionado() {
+    const perfilGIT = informe.perfilGIT;
+    const nombreFuncionario = informe.nombreFuncionario;
+    
+    if (perfilGIT) {
+        const perfiles = {
+            'social': 'GIT Social',
+            'predial': 'GIT Predial',
+            'juridico_predial': 'GIT Jurídico Predial',
+            'ambiental': 'GIT Ambiental',
+            'riesgos': 'GIT Riesgos'
+        };
+        
+        const nombrePerfil = perfiles[perfilGIT] || 'Sin definir';
+        
+        // Actualizar el header si existe
+        const headerElement = document.querySelector('.header p');
+        if (headerElement) {
+            headerElement.textContent = `Canal del Dique - ${nombrePerfil}`;
+        }
+    }
+}
 // Guardar informe completo
 function guardarInforme() {
-    if (!informe.objeto || !informe.fechaSalida) {
-        mostrarNotificacion('⚠️ Complete la información básica antes de guardar', 'warning');
+    // NUEVA VALIDACIÓN - Agregar estas líneas al inicio
+    if (!informe.perfilGIT || !informe.nombreFuncionario || !informe.objeto || !informe.fechaSalida) {
+        mostrarNotificacion('⚠️ Complete GIT, nombre, objeto y fecha antes de guardar', 'warning');
         return;
     }
     
@@ -541,13 +570,23 @@ function exportarJSON() {
     }
 }
 
-// Mostrar resumen
+// Actualizar función mostrarResumen
 function mostrarResumen() {
     const resumen = document.getElementById('resumen');
     
+    const perfiles = {
+        'social': 'GIT Social',
+        'predial': 'GIT Predial',
+        'juridico_predial': 'GIT Jurídico Predial',
+        'ambiental': 'GIT Ambiental',
+        'riesgos': 'GIT Riesgos'
+    };
+    
+    const nombrePerfil = perfiles[informe.perfilGIT] || 'No especificado';
+    
     const totalElementos = informe.actividades.length + informe.compromisos.length;
-    const porcentajeCompletado = informe.objeto && informe.fechaSalida && informe.fechaRegreso ? 
-                                 Math.min(100, 30 + (totalElementos * 10)) : 10;
+    const porcentajeCompletado = informe.objeto && informe.fechaSalida && informe.fechaRegreso && informe.perfilGIT ? 
+                                 Math.min(100, 40 + (totalElementos * 10)) : 20;
     
     resumen.innerHTML = `
         <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #004884;">
@@ -564,9 +603,11 @@ function mostrarResumen() {
                 </div>
             </div>
             
+            <p><strong>👤 Funcionario:</strong> ${informe.nombreFuncionario || 'No especificado'}</p>
+            <p><strong>🏢 GIT:</strong> <span style="background: #004884; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${nombrePerfil}</span></p>
             <p><strong>📍 Lugar:</strong> ${informe.lugar || 'No especificado'}</p>
             <p><strong>📅 Período:</strong> ${informe.fechaSalida || 'Sin definir'} al ${informe.fechaRegreso || 'Sin definir'}</p>
-            <p><strong>👥 Participantes:</strong> ${informe.participantes.length > 0 ? informe.participantes.join(', ') : 'No especificados'}</p>
+            <p><strong>👥 Otros participantes:</strong> ${informe.participantes.length > 0 ? informe.participantes.join(', ') : 'No especificados'}</p>
             <p><strong>📝 Actividades:</strong> ${informe.actividades.length} registradas</p>
             <p><strong>🎯 Compromisos:</strong> ${informe.compromisos.length} registrados</p>
             <p><strong>📊 Estado:</strong> <span style="background: ${informe.estado === 'sincronizado' ? '#28a745' : '#ffc107'}; 
@@ -605,22 +646,52 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
         syncStatus.style.display = 'none';
     }, 3000);
 }
+// Nueva función para mostrar el perfil seleccionado
+function mostrarPerfilSeleccionado() {
+    const perfilGIT = informe.perfilGIT;
+    const nombreFuncionario = informe.nombreFuncionario;
+    
+    if (perfilGIT) {
+        const perfiles = {
+            'social': 'GIT Social',
+            'predial': 'GIT Predial',
+            'juridico_predial': 'GIT Jurídico Predial',
+            'ambiental': 'GIT Ambiental',
+            'riesgos': 'GIT Riesgos'
+        };
+        
+        const nombrePerfil = perfiles[perfilGIT] || 'Sin definir';
+        
+        // Actualizar el header si quieres mostrar el perfil
+        const headerInfo = document.querySelector('.header-info');
+        if (headerInfo && nombreFuncionario) {
+            headerInfo.innerHTML = `
+                <h1>ANI Campo</h1>
+                <p>Canal del Dique - ${nombrePerfil}</p>
+                <p style="font-size: 11px; opacity: 0.8;">${nombreFuncionario}</p>
+            `;
+        }
+    }
+}
 
-// Cargar borrador si existe
+// Actualizar función cargarBorrador
 function cargarBorrador() {
     try {
         const borrador = localStorage.getItem('informe_borrador');
         if (borrador) {
             informe = JSON.parse(borrador);
-            console.log('Borrador cargado:', informe);
             
             // Restaurar valores en formulario
+            const perfilGIT = document.getElementById('perfilGIT');
+            const nombreFuncionario = document.getElementById('nombreFuncionario');
             const lugar = document.getElementById('lugar');
             const fechaSalida = document.getElementById('fechaSalida');
             const fechaRegreso = document.getElementById('fechaRegreso');
             const objeto = document.getElementById('objeto');
             const participantes = document.getElementById('participantes');
             
+            if (perfilGIT) perfilGIT.value = informe.perfilGIT || '';
+            if (nombreFuncionario) nombreFuncionario.value = informe.nombreFuncionario || '';
             if (lugar) lugar.value = informe.lugar || 'Cartagena';
             if (fechaSalida) fechaSalida.value = informe.fechaSalida || '';
             if (fechaRegreso) fechaRegreso.value = informe.fechaRegreso || '';
@@ -630,7 +701,10 @@ function cargarBorrador() {
             actualizarListaActividades();
             actualizarListaCompromisos();
             
-            mostrarNotificacion('📂 Borrador anterior cargado', 'info');
+            // Mostrar el perfil GIT si está seleccionado
+            if (informe.perfilGIT) {
+                mostrarPerfilSeleccionado();
+            }
         }
     } catch (e) {
         console.error('Error cargando borrador:', e);
@@ -654,6 +728,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fechaRegreso) fechaRegreso.value = hoy;
     }
     
+    // NUEVO - Agregar listeners para GIT y nombre
+    const perfilGIT = document.getElementById('perfilGIT');
+    if (perfilGIT) {
+        perfilGIT.addEventListener('change', () => {
+            guardarBorrador();
+            mostrarPerfilSeleccionado();
+        });
+    }
+    
+    const nombreFuncionario = document.getElementById('nombreFuncionario');
+    if (nombreFuncionario) {
+        nombreFuncionario.addEventListener('change', () => {
+            guardarBorrador();
+            mostrarPerfilSeleccionado();
+        });
+    }
+    
     // Verificar conexión periódicamente
     setInterval(checkConnection, 5000);
     
@@ -675,8 +766,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Prevenir pérdida de datos al cerrar
-window.addEventListener('beforeunload', (e) => {
-    guardarBorrador();
-
-});
