@@ -136,6 +136,29 @@
             .controls, .header { display: none; }
             .container { box-shadow: none; }
         }
+        /* Estilos para imágenes en el informe */
+.actividad-box img {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    margin: 5px;
+}
+
+@media print {
+    /* Ajustar imágenes para impresión */
+    .actividad-box img {
+        max-width: 200px !important;
+        page-break-inside: avoid;
+    }
+    
+    .actividad-box {
+        page-break-inside: avoid;
+    }
+}
+
+/* Para exportación a Word */
+.word-export img {
+    max-width: 400px;
+    height: auto;
+}
     </style>
 </head>
 <body>
@@ -531,5 +554,6 @@
     </script>
 </body>
 </html>
+
 
 
