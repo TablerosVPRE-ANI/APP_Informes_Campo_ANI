@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANI - Generador de Informes de Comisión</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .header {
+            background: #004884;
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            margin: -30px -30px 30px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #004884;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #003366;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-word {
+            background: #2b579a;
+            color: white;
+        }
+
+        .btn-pdf {
+            background: #dc3545;
+            color: white;
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .informe-preview {
+            border: 1px solid #ddd;
+            padding: 40px;
+            background: white;
+            min-height: 800px;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+        }
+
+        .informe-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .informe-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .informe-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            vertical-align: top;
+        }
+
+        .informe-table td:first-child {
+            font-weight: bold;
+            background: #f0f0f0;
+            width: 30%;
+        }
+
+        h2 {
+            margin: 30px 0 15px;
+            text-decoration: underline;
+            font-size: 16px;
+        }
+
+        .actividad-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 15px 0;
+            background: #f9f9f9;
+        }
+
+        .compromiso-item {
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 3px solid #004884;
+            background: #f0f8ff;
+        }
+
+        .firma {
+            margin-top: 60px;
+            text-align: center;
+            border-top: 1px solid #000;
+            padding-top: 10px;
+        }
+
+        @media print {
+            .controls { display: none; }
+            .container { box-shadow: none; }
+            .header { display: none; }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sistema de Generación de Informes de Comisión</h1>
+            <p>Vicepresidencia de Planeación, Riesgos y Entorno</p>
+        </div>
+
+        <div class="controls">
+            <select id="informeSelect">
+                <option value="">-- Seleccionar Informe --</option>
+            </select>
+            <button class="btn btn-primary" onclick="cargarInforme()">📄 Cargar Informe</button>
+            <button class="btn btn-success" onclick="generarInforme()">✨ Generar Documento</button>
+            <button class="btn btn-word" onclick="exportarWord()">📝 Exportar Word</button>
+            <button class="btn btn-pdf" onclick="window.print()">📥 Exportar PDF</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            Cargando datos desde Supabase...
+        </div>
+
+        <div id="informeContent" class="informe-preview">
+            <p style="text-align: center; color: #666;">
+                Seleccione un informe de la lista para generar el documento
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="generador-informes.js"></script>
+</body>
+</html>
