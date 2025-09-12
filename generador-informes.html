@@ -56,10 +56,6 @@
             color: white;
         }
 
-        .btn-primary:hover {
-            background: #003366;
-        }
-
         .btn-success {
             background: #28a745;
             color: white;
@@ -80,6 +76,7 @@
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 14px;
+            min-width: 300px;
         }
 
         .informe-preview {
@@ -89,11 +86,6 @@
             min-height: 800px;
             font-family: 'Times New Roman', serif;
             line-height: 1.6;
-        }
-
-        .informe-header {
-            text-align: center;
-            margin-bottom: 30px;
         }
 
         .informe-table {
@@ -134,23 +126,15 @@
             background: #f0f8ff;
         }
 
-        .firma {
-            margin-top: 60px;
-            text-align: center;
-            border-top: 1px solid #000;
-            padding-top: 10px;
-        }
-
-        @media print {
-            .controls { display: none; }
-            .container { box-shadow: none; }
-            .header { display: none; }
-        }
-
         .loading {
             text-align: center;
             padding: 20px;
             color: #666;
+        }
+
+        @media print {
+            .controls, .header { display: none; }
+            .container { box-shadow: none; }
         }
     </style>
 </head>
@@ -166,7 +150,7 @@
                 <option value="">-- Seleccionar Informe --</option>
             </select>
             <button class="btn btn-primary" onclick="cargarInforme()">📄 Cargar Informe</button>
-            <button class="btn btn-success" onclick="generarInforme()">✨ Generar Documento</button>
+            <button class="btn btn-success" onclick="generarDocumento()">✨ Generar Documento</button>
             <button class="btn btn-word" onclick="exportarWord()">📝 Exportar Word</button>
             <button class="btn btn-pdf" onclick="window.print()">📥 Exportar PDF</button>
         </div>
@@ -183,6 +167,277 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="generador-informes.js"></script>
+    
+    <script>
+        // Configuración Supabase - REEMPLAZAR CON TUS CREDENCIALES
+        const SUPABASE_URL = 'https://plcdxksctnhuclgymhqq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsY2R4a3NjdG5odWNsZ3ltaHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MzA0MzIsImV4cCI6MjA1MTUwNjQzMn0.6Yb3u1leIlH-q4Zr1TQ4YZ1EMLNGyGjlu0n8s5mTEXk';
+
+        let supabase = null;
+        let informeActual = null;
+
+        // Inicializar al cargar la página
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('Iniciando aplicación...');
+            
+            // Inicializar Supabase
+            if (window.supabase) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase inicializado');
+                await cargarListaInformes();
+            } else {
+                console.error('Supabase no se cargó correctamente');
+                alert('Error: No se pudo cargar la biblioteca de Supabase');
+            }
+        });
+
+        async function cargarListaInformes() {
+            if (!supabase) {
+                console.error('Supabase no está inicializado');
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                console.log('Consultando informes...');
+                const { data, error } = await supabase
+                    .from('informes')
+                    .select('*')
+                    .order('fecha_creacion', { ascending: false });
+                
+                if (error) {
+                    console.error('Error de Supabase:', error);
+                    throw error;
+                }
+                
+                console.log(`Se encontraron ${data?.length || 0} informes`);
+                
+                const select = document.getElementById('informeSelect');
+                select.innerHTML = '<option value="">-- Seleccionar Informe --</option>';
+                
+                if (data && data.length > 0) {
+                    data.forEach(informe => {
+                        const option = document.createElement('option');
+                        option.value = informe.informe_id;
+                        const fecha = informe.fecha_salida || 'Sin fecha';
+                        const objeto = (informe.objeto || 'Sin objeto').substring(0, 50);
+                        option.textContent = `${informe.lugar} - ${fecha} - ${objeto}...`;
+                        select.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "No hay informes disponibles";
+                    select.appendChild(option);
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar informes: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function cargarInforme() {
+            const informeId = document.getElementById('informeSelect').value;
+            if (!informeId) {
+                alert('Por favor seleccione un informe');
+                return;
+            }
+            
+            if (!supabase) {
+                alert('Error: Supabase no está inicializado');
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                console.log('Cargando informe:', informeId);
+                
+                // Cargar informe principal
+                const { data: informe, error: errorInforme } = await supabase
+                    .from('informes')
+                    .select('*')
+                    .eq('informe_id', informeId)
+                    .single();
+                
+                if (errorInforme) {
+                    console.error('Error cargando informe:', errorInforme);
+                    throw errorInforme;
+                }
+                
+                // Cargar actividades
+                const { data: actividades } = await supabase
+                    .from('actividades')
+                    .select('*')
+                    .eq('informe_id', informeId);
+                
+                // Cargar compromisos
+                const { data: compromisos } = await supabase
+                    .from('compromisos')
+                    .select('*')
+                    .eq('informe_id', informeId);
+                
+                // Combinar todo
+                informeActual = {
+                    ...informe,
+                    actividades: actividades || [],
+                    compromisos: compromisos || []
+                };
+                
+                // Si hay datos completos, usarlos también
+                if (informe.datos_completos) {
+                    const datosCompletos = typeof informe.datos_completos === 'string' 
+                        ? JSON.parse(informe.datos_completos) 
+                        : informe.datos_completos;
+                    
+                    informeActual = {
+                        ...informeActual,
+                        ...datosCompletos
+                    };
+                }
+                
+                console.log('Informe cargado:', informeActual);
+                mostrarInforme();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar el informe');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function mostrarInforme() {
+            if (!informeActual) return;
+            
+            const fechaHoy = new Date().toLocaleDateString('es-CO', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            let html = `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="font-size: 24px;">INFORME DE COMISIÓN</h1>
+                    <p>AGENCIA NACIONAL DE INFRAESTRUCTURA<br>
+                    Vicepresidencia de Planeación, Riesgos y Entorno</p>
+                </div>
+
+                <table class="informe-table">
+                    <tr>
+                        <td>Fecha de elaboración:</td>
+                        <td>${fechaHoy}</td>
+                    </tr>
+                    <tr>
+                        <td>Lugar:</td>
+                        <td>${informeActual.lugar || 'No especificado'}</td>
+                    </tr>
+                    <tr>
+                        <td>Proyecto:</td>
+                        <td>${informeActual.proyecto || 'Canal del Dique'}</td>
+                    </tr>
+                    <tr>
+                        <td>Fecha salida:</td>
+                        <td>${formatearFecha(informeActual.fecha_salida)}</td>
+                    </tr>
+                    <tr>
+                        <td>Fecha regreso:</td>
+                        <td>${formatearFecha(informeActual.fecha_regreso)}</td>
+                    </tr>
+                    <tr>
+                        <td>Participantes:</td>
+                        <td>${Array.isArray(informeActual.participantes) ? informeActual.participantes.join(', ') : 'No especificados'}</td>
+                    </tr>
+                </table>
+
+                <h2>Objeto del desplazamiento</h2>
+                <p>${informeActual.objeto || 'No especificado'}</p>
+
+                <h2>Actividades Desarrolladas</h2>
+            `;
+
+            // Agregar actividades
+            if (informeActual.actividades && informeActual.actividades.length > 0) {
+                informeActual.actividades.forEach((act, i) => {
+                    html += `
+                        <div class="actividad-box">
+                            <strong>Actividad ${i + 1}: ${act.titulo || 'Sin título'}</strong><br>
+                            Fecha: ${formatearFecha(act.fecha)}<br>
+                            ${act.descripcion || ''}
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<p>No se registraron actividades</p>';
+            }
+
+            html += '<h2>Compromisos Asumidos</h2>';
+
+            // Agregar compromisos
+            if (informeActual.compromisos && informeActual.compromisos.length > 0) {
+                informeActual.compromisos.forEach(comp => {
+                    html += `
+                        <div class="compromiso-item">
+                            <strong>${comp.descripcion || 'Sin descripción'}</strong><br>
+                            Responsable: ${comp.responsable || 'No asignado'} | 
+                            Fecha: ${formatearFecha(comp.fecha_limite)} | 
+                            Prioridad: ${comp.prioridad || 'Media'}
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<p>No se establecieron compromisos</p>';
+            }
+
+            html += `
+                <h2>Conclusiones</h2>
+                <ol>
+                    <li>Se cumplieron los objetivos de la comisión en ${informeActual.lugar}.</li>
+                    <li>Se ejecutaron ${informeActual.actividades?.length || 0} actividades.</li>
+                    <li>Se establecieron ${informeActual.compromisos?.length || 0} compromisos para seguimiento.</li>
+                </ol>
+            `;
+
+            document.getElementById('informeContent').innerHTML = html;
+        }
+
+        function formatearFecha(fecha) {
+            if (!fecha) return 'No especificada';
+            try {
+                return new Date(fecha).toLocaleDateString('es-CO');
+            } catch {
+                return fecha;
+            }
+        }
+
+        function generarDocumento() {
+            if (!informeActual) {
+                alert('Primero debe cargar un informe');
+                return;
+            }
+            alert('Documento generado. Puede exportarlo usando los botones.');
+        }
+
+        function exportarWord() {
+            if (!informeActual) {
+                alert('Primero debe cargar un informe');
+                return;
+            }
+            
+            const contenido = document.getElementById('informeContent').innerHTML;
+            const blob = new Blob(['\ufeff', contenido], {
+                type: 'application/msword'
+            });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Informe_${informeActual.lugar}_${new Date().toISOString().split('T')[0]}.doc`;
+            link.click();
+        }
+    </script>
 </body>
 </html>
