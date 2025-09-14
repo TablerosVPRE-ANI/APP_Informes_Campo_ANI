@@ -137,28 +137,28 @@
             .container { box-shadow: none; }
         }
         /* Estilos para imágenes en el informe */
-.actividad-box img {
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    margin: 5px;
-}
+        .actividad-box img {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin: 5px;
+        }
 
-@media print {
-    /* Ajustar imágenes para impresión */
-    .actividad-box img {
-        max-width: 200px !important;
-        page-break-inside: avoid;
-    }
-    
-    .actividad-box {
-        page-break-inside: avoid;
-    }
-}
+        @media print {
+            /* Ajustar imágenes para impresión */
+            .actividad-box img {
+                max-width: 200px !important;
+                page-break-inside: avoid;
+            }
+            
+            .actividad-box {
+                page-break-inside: avoid;
+            }
+        }
 
-/* Para exportación a Word */
-.word-export img {
-    max-width: 400px;
-    height: auto;
-}
+        /* Para exportación a Word */
+        .word-export img {
+            max-width: 400px;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -335,154 +335,89 @@
         }
 
         function mostrarInforme() {
-    if (!informeActual) return;
-    
-    const fechaHoy = new Date().toLocaleDateString('es-CO', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
-    
-    let html = `
-        <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="font-size: 24px;">INFORME DE COMISIÓN</h1>
-            <p>AGENCIA NACIONAL DE INFRAESTRUCTURA<br>
-            Vicepresidencia de Planeación, Riesgos y Entorno</p>
-        </div>
-
-        <table class="informe-table">
-            <tr>
-                <td>Fecha de elaboración:</td>
-                <td>${fechaHoy}</td>
-            </tr>
-            <tr>
-                <td>Lugar:</td>
-                <td>${informeActual.lugar || 'No especificado'}</td>
-            </tr>
-            <tr>
-                <td>Proyecto:</td>
-                <td>${informeActual.proyecto || 'Canal del Dique'}</td>
-            </tr>
-            <tr>
-                <td>Fecha salida:</td>
-                <td>${formatearFecha(informeActual.fecha_salida)}</td>
-            </tr>
-            <tr>
-                <td>Fecha regreso:</td>
-                <td>${formatearFecha(informeActual.fecha_regreso)}</td>
-            </tr>
-            <tr>
-                <td>Participantes:</td>
-                <td>${Array.isArray(informeActual.participantes) ? informeActual.participantes.join(', ') : 'No especificados'}</td>
-            </tr>
-        </table>
-
-        <h2>Objeto del desplazamiento</h2>
-        <p>${informeActual.objeto || 'No especificado'}</p>
-
-        <h2>Actividades Desarrolladas</h2>
-    `;
-
-    // Agregar actividades CON IMÁGENES
-    if (informeActual.actividades && informeActual.actividades.length > 0) {
-        informeActual.actividades.forEach((act, i) => {
-            html += `
-                <div class="actividad-box">
-                    <strong>Actividad ${i + 1}: ${act.titulo || 'Sin título'}</strong><br>
-                    <p><strong>Fecha:</strong> ${formatearFecha(act.fecha)}</p>
-                    <p><strong>Descripción:</strong> ${act.descripcion || 'Sin descripción'}</p>
-            `;
+            if (!informeActual) return;
             
-            // AGREGAR FOTOS SI EXISTEN
-            if (act.fotos && act.fotos.length > 0) {
-                html += '<p><strong>Registro Fotográfico:</strong></p>';
-                html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 10px 0;">';
-                
-                act.fotos.forEach((foto, fotoIndex) => {
-                    // Si la foto tiene datos base64
-                    if (foto.datos && foto.datos.startsWith('data:image')) {
-                        html += `
-                            <div style="text-align: center;">
-                                <img src="${foto.datos}" 
-                                     style="width: 100%; max-width: 300px; height: auto; border: 1px solid #ddd; padding: 5px;"
-                                     alt="Evidencia ${fotoIndex + 1}">
-                                <p style="font-size: 12px; color: #666;">
-                                    ${foto.nombre || `Evidencia ${fotoIndex + 1}`}
-                                </p>
-                            </div>
-                        `;
-                    }
-                });
-                
-                html += '</div>';
-            }
+            const fechaHoy = new Date().toLocaleDateString('es-CO', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
             
-            html += '</div>';
-        });
-    } else {
-        html += '<p>No se registraron actividades</p>';
-    }
-
-    html += '<h2>Compromisos Asumidos</h2>';
-
-    // Agregar compromisos
-    if (informeActual.compromisos && informeActual.compromisos.length > 0) {
-        informeActual.compromisos.forEach(comp => {
-            html += `
-                <div class="compromiso-item">
-                    <strong>${comp.descripcion || 'Sin descripción'}</strong><br>
-                    Responsable: ${comp.responsable || 'No asignado'} | 
-                    Fecha: ${formatearFecha(comp.fecha_limite)} | 
-                    Prioridad: ${comp.prioridad || 'Media'}
+            let html = `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="font-size: 24px;">INFORME DE COMISIÓN</h1>
+                    <p>AGENCIA NACIONAL DE INFRAESTRUCTURA<br>
+                    Vicepresidencia de Planeación, Riesgos y Entorno</p>
                 </div>
+
+                <table class="informe-table">
+                    <tr>
+                        <td>Fecha de elaboración:</td>
+                        <td>${fechaHoy}</td>
+                    </tr>
+                    <tr>
+                        <td>Lugar:</td>
+                        <td>${informeActual.lugar || 'No especificado'}</td>
+                    </tr>
+                    <tr>
+                        <td>Proyecto:</td>
+                        <td>${informeActual.proyecto || 'Canal del Dique'}</td>
+                    </tr>
+                    <tr>
+                        <td>Fecha salida:</td>
+                        <td>${formatearFecha(informeActual.fecha_salida)}</td>
+                    </tr>
+                    <tr>
+                        <td>Fecha regreso:</td>
+                        <td>${formatearFecha(informeActual.fecha_regreso)}</td>
+                    </tr>
+                    <tr>
+                        <td>Participantes:</td>
+                        <td>${Array.isArray(informeActual.participantes) ? informeActual.participantes.join(', ') : 'No especificados'}</td>
+                    </tr>
+                </table>
+
+                <h2>Objeto del desplazamiento</h2>
+                <p>${informeActual.objeto || 'No especificado'}</p>
+
+                <h2>Actividades Desarrolladas</h2>
             `;
-        });
-    } else {
-        html += '<p>No se establecieron compromisos</p>';
-    }
 
-    // SECCIÓN DE EVIDENCIAS GENERALES (si hay fotos adicionales)
-    const tieneEvidencias = informeActual.actividades?.some(act => act.fotos && act.fotos.length > 0);
-    
-    if (tieneEvidencias) {
-        html += `
-            <h2>Resumen de Evidencias Fotográficas</h2>
-            <p>Se adjuntaron evidencias fotográficas en ${
-                informeActual.actividades.filter(act => act.fotos && act.fotos.length > 0).length
-            } actividad(es), con un total de ${
-                informeActual.actividades.reduce((total, act) => total + (act.fotos?.length || 0), 0)
-            } fotografía(s) que documentan el desarrollo de la comisión.</p>
-        `;
-    }
-
-    html += `
-        <h2>Conclusiones</h2>
-        <ol>
-            <li>Se cumplieron los objetivos de la comisión en ${informeActual.lugar}.</li>
-            <li>Se ejecutaron ${informeActual.actividades?.length || 0} actividades.</li>
-            <li>Se establecieron ${informeActual.compromisos?.length || 0} compromisos para seguimiento.</li>
-            ${tieneEvidencias ? '<li>Se documentó fotográficamente el desarrollo de las actividades.</li>' : ''}
-        </ol>
-
-        <div style="margin-top: 60px; text-align: center; border-top: 1px solid #000; padding-top: 10px;">
-            <p><strong>${informeActual.nombreFuncionario || informeActual.usuario || 'FUNCIONARIO RESPONSABLE'}</strong></p>
-            <p>Vicepresidencia de Planeación, Riesgos y Entorno</p>
-            <p>Agencia Nacional de Infraestructura</p>
-        </div>
-    `;
-
-    document.getElementById('informeContent').innerHTML = html;
-}
-            // Agregar actividades
+            // Agregar actividades CON IMÁGENES
             if (informeActual.actividades && informeActual.actividades.length > 0) {
                 informeActual.actividades.forEach((act, i) => {
                     html += `
                         <div class="actividad-box">
                             <strong>Actividad ${i + 1}: ${act.titulo || 'Sin título'}</strong><br>
-                            Fecha: ${formatearFecha(act.fecha)}<br>
-                            ${act.descripcion || ''}
-                        </div>
+                            <p><strong>Fecha:</strong> ${formatearFecha(act.fecha)}</p>
+                            <p><strong>Descripción:</strong> ${act.descripcion || 'Sin descripción'}</p>
                     `;
+                    
+                    // AGREGAR FOTOS SI EXISTEN
+                    if (act.fotos && act.fotos.length > 0) {
+                        html += '<p><strong>Registro Fotográfico:</strong></p>';
+                        html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 10px 0;">';
+                        
+                        act.fotos.forEach((foto, fotoIndex) => {
+                            // Si la foto tiene datos base64
+                            if (foto.datos && foto.datos.startsWith('data:image')) {
+                                html += `
+                                    <div style="text-align: center;">
+                                        <img src="${foto.datos}" 
+                                             style="width: 100%; max-width: 300px; height: auto; border: 1px solid #ddd; padding: 5px;"
+                                             alt="Evidencia ${fotoIndex + 1}">
+                                        <p style="font-size: 12px; color: #666;">
+                                            ${foto.nombre || `Evidencia ${fotoIndex + 1}`}
+                                        </p>
+                                    </div>
+                                `;
+                            }
+                        });
+                        
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
                 });
             } else {
                 html += '<p>No se registraron actividades</p>';
@@ -506,13 +441,34 @@
                 html += '<p>No se establecieron compromisos</p>';
             }
 
+            // SECCIÓN DE EVIDENCIAS GENERALES (si hay fotos adicionales)
+            const tieneEvidencias = informeActual.actividades?.some(act => act.fotos && act.fotos.length > 0);
+            
+            if (tieneEvidencias) {
+                html += `
+                    <h2>Resumen de Evidencias Fotográficas</h2>
+                    <p>Se adjuntaron evidencias fotográficas en ${
+                        informeActual.actividades.filter(act => act.fotos && act.fotos.length > 0).length
+                    } actividad(es), con un total de ${
+                        informeActual.actividades.reduce((total, act) => total + (act.fotos?.length || 0), 0)
+                    } fotografía(s) que documentan el desarrollo de la comisión.</p>
+                `;
+            }
+
             html += `
                 <h2>Conclusiones</h2>
                 <ol>
                     <li>Se cumplieron los objetivos de la comisión en ${informeActual.lugar}.</li>
                     <li>Se ejecutaron ${informeActual.actividades?.length || 0} actividades.</li>
                     <li>Se establecieron ${informeActual.compromisos?.length || 0} compromisos para seguimiento.</li>
+                    ${tieneEvidencias ? '<li>Se documentó fotográficamente el desarrollo de las actividades.</li>' : ''}
                 </ol>
+
+                <div style="margin-top: 60px; text-align: center; border-top: 1px solid #000; padding-top: 10px;">
+                    <p><strong>${informeActual.nombreFuncionario || informeActual.usuario || 'FUNCIONARIO RESPONSABLE'}</strong></p>
+                    <p>Vicepresidencia de Planeación, Riesgos y Entorno</p>
+                    <p>Agencia Nacional de Infraestructura</p>
+                </div>
             `;
 
             document.getElementById('informeContent').innerHTML = html;
