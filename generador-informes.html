@@ -302,104 +302,177 @@
             }
         }
 
-        function generarDocumentoOficial() {
-            if (!informeActual) return;
+function generarDocumentoOficial() {
+    if (!informeActual) return;
+    
+    const fechaHoy = new Date().toLocaleDateString('es-CO');
+    const codigo = 'GADF-F-074';
+    const version = '002';
+    
+    const logoANI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRkY2NjAwIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI0MCUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtd2VpZ2h0PSJib2xkIj5BTkk8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI2NSUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCI+Q09MT01CSUE8L3RleHQ+Cjwvc3ZnPg==';
+    
+    // Procesar datos_completos si contiene las actividades con fotos
+    if (informeActual.datos_completos) {
+        try {
+            const datosCompletos = typeof informeActual.datos_completos === 'string' 
+                ? JSON.parse(informeActual.datos_completos) 
+                : informeActual.datos_completos;
             
-            const fechaHoy = new Date().toLocaleDateString('es-CO');
-            const codigo = 'GADF-F-074';
-            const version = '002';
-            
-            // Logo ANI en base64 (simplificado)
-            const logoANI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRkY2NjAwIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI0MCUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtd2VpZ2h0PSJib2xkIj5BTkk8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI2NSUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCI+Q09MT01CSUE8L3RleHQ+Cjwvc3ZnPg==';
-            
-            let html = `
-                <div class="pagina">
-                    <!-- Encabezado Oficial -->
-                    <div class="encabezado-oficial">
-                        <img src="${logoANI}" alt="ANI" class="logo-ani">
-                        <div class="titulo-encabezado">
-                            <h2>INFORME DE COMISIÓN Y DESPLAZAMIENTO</h2>
-                            <p>GESTIÓN ADMINISTRATIVA Y FINANCIERA</p>
-                        </div>
-                        <div class="info-documento">
-                            <span>CÓDIGO</span>
-                            <span>${codigo}</span>
-                            <span>VERSIÓN</span>
-                            <span>${version}</span>
-                            <span>FECHA</span>
-                            <span>${fechaHoy}</span>
-                        </div>
-                    </div>
-
-                    <!-- Tabla de Información -->
-                    <table class="tabla-info">
-                        <tr>
-                            <td>Fecha de elaboración del informe:</td>
-                            <td>${fechaHoy}</td>
-                        </tr>
-                        <tr>
-                            <td>Lugar de la comisión o desplazamiento:</td>
-                            <td>${informeActual.lugar || ''}</td>
-                        </tr>
-                        <tr>
-                            <td>Proyecto:</td>
-                            <td>${informeActual.proyecto || 'Canal del Dique'}</td>
-                        </tr>
-                        <tr>
-                            <td>Modo:</td>
-                            <td>Carretero</td>
-                        </tr>
-                        <tr>
-                            <td>Fecha salida:</td>
-                            <td>${formatearFecha(informeActual.fecha_salida)}</td>
-                            <td>Fecha regreso:</td>
-                            <td>${formatearFecha(informeActual.fecha_regreso)}</td>
-                        </tr>
-                        <tr>
-                            <td>Partes interesadas con las que se reúne*:</td>
-                            <td colspan="3">${informeActual.participantes?.join(', ') || 'No especificado'}</td>
-                        </tr>
-                    </table>
-
-                    <div class="nota-pie">
-                        <em>Nota: toda la información debe ser acorde con lo establecido en la solicitud de la comisión y 
-                        desplazamiento, en caso de que difieran deberá justificarse en el cuerpo de este informe.</em>
-                    </div>
-
-                    <div class="contenido">
-                        <h3>Objeto del desplazamiento</h3>
-                        <p>${informeActual.objeto || ''}</p>
-
-                        <h3>Actividades Desarrolladas</h3>
-                        ${generarActividades()}
-
-                        <h3>Compromisos Estratégicos Asumidos</h3>
-                        ${generarCompromisos()}
-
-                        <h3>Conclusiones</h3>
-                        ${generarConclusiones()}
-                    </div>
+            // Si las actividades en datos_completos tienen fotos, usarlas
+            if (datosCompletos.actividades) {
+                informeActual.actividades = datosCompletos.actividades;
+            }
+        } catch (e) {
+            console.log('Error procesando datos_completos:', e);
+        }
+    }
+    
+    let html = `
+        <div class="pagina">
+            <!-- Encabezado Oficial -->
+            <div class="encabezado-oficial">
+                <img src="${logoANI}" alt="ANI" class="logo-ani">
+                <div class="titulo-encabezado">
+                    <h2>INFORME DE COMISIÓN Y DESPLAZAMIENTO</h2>
+                    <p>GESTIÓN ADMINISTRATIVA Y FINANCIERA</p>
                 </div>
-            `;
-            
-            document.getElementById('documentoOficial').innerHTML = html;
-        }
+                <div class="info-documento">
+                    <span>CÓDIGO</span>
+                    <span>${codigo}</span>
+                    <span>VERSIÓN</span>
+                    <span>${version}</span>
+                    <span>FECHA</span>
+                    <span>${fechaHoy}</span>
+                </div>
+            </div>
 
-        function generarActividades() {
-            if (!informeActual.actividades?.length) return '<p>No se registraron actividades.</p>';
+            <!-- Tabla de Información -->
+            <table class="tabla-info">
+                <tr>
+                    <td>Fecha de elaboración del informe:</td>
+                    <td>${fechaHoy}</td>
+                </tr>
+                <tr>
+                    <td>Lugar de la comisión o desplazamiento:</td>
+                    <td>${informeActual.lugar || ''}</td>
+                </tr>
+                <tr>
+                    <td>Proyecto:</td>
+                    <td>${informeActual.proyecto || 'Canal del Dique'}</td>
+                </tr>
+                <tr>
+                    <td>Modo:</td>
+                    <td>Carretero</td>
+                </tr>
+                <tr>
+                    <td>Fecha salida:</td>
+                    <td>${formatearFecha(informeActual.fecha_salida)}</td>
+                    <td>Fecha regreso:</td>
+                    <td>${formatearFecha(informeActual.fecha_regreso)}</td>
+                </tr>
+                <tr>
+                    <td>Partes interesadas con las que se reúne*:</td>
+                    <td colspan="3">${informeActual.participantes?.join(', ') || 'No especificado'}</td>
+                </tr>
+            </table>
+
+            <div class="nota-pie">
+                <em>Nota: toda la información debe ser acorde con lo establecido en la solicitud de la comisión y 
+                desplazamiento, en caso de que difieran deberá justificarse en el cuerpo de este informe.</em>
+            </div>
+
+            <div class="contenido">
+                <h3>Objeto del desplazamiento</h3>
+                <p>${informeActual.objeto || ''}</p>
+
+                <h3>Actividades Desarrolladas</h3>
+                ${generarActividades()}
+
+                <h3>Compromisos Estratégicos Asumidos</h3>
+                ${generarCompromisos()}
+
+                <h3>Conclusiones</h3>
+                ${generarConclusiones()}
+                
+                ${generarRegistroFotografico()}
+                
+                <div style="margin-top: 50px; text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto;"></div>
+                    <p style="margin-top: 5px;">
+                        <strong>${informeActual.nombreFuncionario || 'FUNCIONARIO RESPONSABLE'}</strong><br>
+                        ${informeActual.perfilGIT ? `GIT ${informeActual.perfilGIT}` : ''}<br>
+                        Vicepresidencia de Planeación, Riesgos y Entorno<br>
+                        Agencia Nacional de Infraestructura
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('documentoOficial').innerHTML = html;
+}
+
+function generarActividades() {
+    if (!informeActual.actividades?.length) return '<p>No se registraron actividades.</p>';
+    
+    let html = '';
+    informeActual.actividades.forEach((act, i) => {
+        html += `
+            <div class="actividad-item">
+                <strong>${i + 1}. ${act.titulo || 'Actividad'}</strong>
+                <p><strong>Fecha:</strong> ${formatearFecha(act.fecha)}</p>
+                <p><strong>Descripción:</strong> ${act.descripcion || ''}</p>
+        `;
+        
+        // AGREGAR IMÁGENES SI EXISTEN
+        if (act.fotos && act.fotos.length > 0) {
+            html += '<p><strong>Registro Fotográfico:</strong></p>';
+            html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 10px 0;">';
             
-            let html = '';
-            informeActual.actividades.forEach((act, i) => {
-                html += `
-                    <div class="actividad-item">
-                        <strong>${i + 1}. ${act.titulo || 'Actividad'}</strong>
-                        <p>Fecha: ${formatearFecha(act.fecha)}</p>
-                        <p>${act.descripcion || ''}</p>
-                    </div>
-                `;
+            act.fotos.forEach((foto, fotoIndex) => {
+                if (foto.datos && foto.datos.startsWith('data:image')) {
+                    html += `
+                        <div style="text-align: center; page-break-inside: avoid;">
+                            <img src="${foto.datos}" 
+                                 style="width: 100%; max-width: 200px; height: auto; 
+                                        border: 1px solid #333; padding: 3px;"
+                                 alt="Evidencia ${fotoIndex + 1}">
+                            <p style="font-size: 9px; margin-top: 3px;">
+                                Imagen ${i + 1}.${fotoIndex + 1}: ${foto.nombre || `Evidencia fotográfica`}
+                            </p>
+                        </div>
+                    `;
+                }
             });
-            return html;
+            
+            html += '</div>';
         }
+        
+        html += '</div>';
+    });
+    return html;
+}
+
+// También agregar sección de registro fotográfico al final si hay imágenes
+function generarRegistroFotografico() {
+    let totalFotos = 0;
+    let htmlFotos = '';
+    
+    if (informeActual.actividades) {
+        informeActual.actividades.forEach((act, actIndex) => {
+            if (act.fotos && act.fotos.length > 0) {
+                totalFotos += act.fotos.length;
+            }
+        });
+    }
+    
+    if (totalFotos === 0) return '';
+    
+    return `
+        <h3>Anexo: Registro Fotográfico</h3>
+        <p>Se adjuntan ${totalFotos} evidencias fotográficas que documentan las actividades realizadas durante la comisión.</p>
+    `;
+}
 
         function generarCompromisos() {
             if (!informeActual.compromisos?.length) return '<p>No se establecieron compromisos.</p>';
@@ -453,6 +526,7 @@
     </script>
 </body>
 </html>
+
 
 
 
