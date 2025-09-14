@@ -179,6 +179,23 @@
             padding: 20px;
             color: #666;
         }
+        /* Agregar en la sección <style> */
+.actividad-item img {
+    display: block;
+    margin: 5px auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+@media print {
+    .actividad-item img {
+        max-width: 150px !important;
+        page-break-inside: avoid;
+    }
+    
+    .actividad-item {
+        page-break-inside: avoid;
+    }
+}
     </style>
 </head>
 <body>
@@ -526,6 +543,7 @@ function generarRegistroFotografico() {
     </script>
 </body>
 </html>
+
 
 
 
