@@ -529,20 +529,315 @@ function generarRegistroFotografico() {
             alert('Documento generado en formato oficial');
         }
 
-        function exportarWord() {
-            if (!informeActual) return;
+function exportarWord() {
+    if (!informeActual) {
+        alert('Primero debe cargar un informe');
+        return;
+    }
+    
+    const fechaHoy = new Date().toLocaleDateString('es-CO');
+    const codigo = 'GADF-F-074';
+    const version = '002';
+    
+    // HTML específico para Word con estilos compatibles
+    const contenidoWord = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+              xmlns:w='urn:schemas-microsoft-com:office:word' 
+              xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+            <meta charset='utf-8'>
+            <title>Informe de Comisión ANI</title>
+            <!--[if gte mso 9]>
+            <xml>
+                <w:WordDocument>
+                    <w:View>Print</w:View>
+                    <w:Zoom>100</w:Zoom>
+                    <w:DoNotOptimizeForBrowser/>
+                </w:WordDocument>
+            </xml>
+            <![endif]-->
+            <style>
+                @page {
+                    size: 21cm 29.7cm;
+                    margin: 2cm;
+                }
+                
+                body {
+                    font-family: Arial, sans-serif;
+                    font-size: 11pt;
+                    line-height: 1.5;
+                    color: #000;
+                }
+                
+                table {
+                    border-collapse: collapse;
+                    width: 100%;
+                    margin-bottom: 20px;
+                }
+                
+                td, th {
+                    border: 1px solid black;
+                    padding: 8px;
+                    vertical-align: top;
+                }
+                
+                .header-table {
+                    width: 100%;
+                    border: 2px solid black;
+                    margin-bottom: 20px;
+                }
+                
+                .header-table td {
+                    padding: 5px;
+                    text-align: center;
+                }
+                
+                .info-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                
+                .info-table td {
+                    border: 1px solid black;
+                    padding: 5px;
+                }
+                
+                .info-table td:first-child {
+                    font-weight: bold;
+                    background-color: #f0f0f0;
+                    width: 35%;
+                }
+                
+                h1 {
+                    font-size: 14pt;
+                    font-weight: bold;
+                    text-align: center;
+                    margin: 10px 0;
+                }
+                
+                h2 {
+                    font-size: 12pt;
+                    font-weight: bold;
+                    text-align: center;
+                    margin: 8px 0;
+                }
+                
+                h3 {
+                    font-size: 11pt;
+                    font-weight: bold;
+                    text-decoration: underline;
+                    margin: 15px 0 10px 0;
+                }
+                
+                p {
+                    margin: 10px 0;
+                    text-align: justify;
+                }
+                
+                .nota {
+                    font-size: 9pt;
+                    font-style: italic;
+                    margin: 10px 0;
+                    padding-top: 10px;
+                    border-top: 1px solid black;
+                }
+                
+                .actividad {
+                    margin: 15px 0;
+                    padding: 10px;
+                    background-color: #f9f9f9;
+                }
+                
+                .compromiso {
+                    margin: 10px 0;
+                    padding: 8px;
+                    background-color: #f0f8ff;
+                    border-left: 3px solid #004884;
+                }
+                
+                .firma {
+                    margin-top: 50px;
+                    text-align: center;
+                }
+                
+                .firma-linea {
+                    border-top: 1px solid black;
+                    width: 200px;
+                    margin: 0 auto 10px auto;
+                }
+                
+                img {
+                    max-width: 300px;
+                    height: auto;
+                    margin: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            <!-- Encabezado del documento -->
+            <table class="header-table">
+                <tr>
+                    <td rowspan="3" style="width: 100px;">
+                        <strong>ANI</strong><br>
+                        <span style="font-size: 8pt;">COLOMBIA</span>
+                    </td>
+                    <td rowspan="2" style="font-size: 14pt; font-weight: bold;">
+                        INFORME DE COMISIÓN Y DESPLAZAMIENTO<br>
+                        <span style="font-size: 11pt; font-weight: normal;">GESTIÓN ADMINISTRATIVA Y FINANCIERA</span>
+                    </td>
+                    <td style="font-size: 9pt;">CÓDIGO</td>
+                    <td style="font-size: 9pt;">${codigo}</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 9pt;">VERSIÓN</td>
+                    <td style="font-size: 9pt;">${version}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                    <td style="font-size: 9pt;">FECHA</td>
+                    <td style="font-size: 9pt;">${fechaHoy}</td>
+                </tr>
+            </table>
             
-            const contenido = document.getElementById('documentoOficial').innerHTML;
-            const blob = new Blob(['\ufeff', contenido], { type: 'application/msword' });
+            <!-- Tabla de información -->
+            <table class="info-table">
+                <tr>
+                    <td>Fecha de elaboración del informe:</td>
+                    <td colspan="3">${fechaHoy}</td>
+                </tr>
+                <tr>
+                    <td>Lugar de la comisión o desplazamiento:</td>
+                    <td colspan="3">${informeActual.lugar || ''}</td>
+                </tr>
+                <tr>
+                    <td>Proyecto:</td>
+                    <td colspan="3">${informeActual.proyecto || 'Canal del Dique'}</td>
+                </tr>
+                <tr>
+                    <td>Modo:</td>
+                    <td colspan="3">Carretero</td>
+                </tr>
+                <tr>
+                    <td>Fecha salida:</td>
+                    <td>${formatearFecha(informeActual.fecha_salida)}</td>
+                    <td>Fecha regreso:</td>
+                    <td>${formatearFecha(informeActual.fecha_regreso)}</td>
+                </tr>
+                <tr>
+                    <td>Partes interesadas con las que se reúne*:</td>
+                    <td colspan="3">${informeActual.participantes?.join(', ') || 'No especificado'}</td>
+                </tr>
+            </table>
             
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `Informe_Oficial_ANI_${informeActual.lugar}_${new Date().toISOString().split('T')[0]}.doc`;
-            link.click();
+            <p class="nota">
+                <em>Nota: toda la información debe ser acorde con lo establecido en la solicitud de la comisión y 
+                desplazamiento, en caso de que difieran deberá justificarse en el cuerpo de este informe.</em>
+            </p>
+            
+            <h3>Objeto del desplazamiento</h3>
+            <p>${informeActual.objeto || 'No especificado'}</p>
+            
+            <h3>Actividades Desarrolladas</h3>
+            ${generarActividadesWord()}
+            
+            <h3>Compromisos Estratégicos Asumidos</h3>
+            ${generarCompromisosWord()}
+            
+            <h3>Conclusiones</h3>
+            <ol>
+                <li>Se cumplieron los objetivos establecidos para la comisión en ${informeActual.lugar}.</li>
+                <li>Se ejecutaron ${informeActual.actividades?.length || 0} actividades durante la visita.</li>
+                <li>Se establecieron ${informeActual.compromisos?.length || 0} compromisos para seguimiento.</li>
+                <li>La información recopilada contribuye al desarrollo del proyecto ${informeActual.proyecto}.</li>
+            </ol>
+            
+            <div class="firma">
+                <div class="firma-linea"></div>
+                <p>
+                    <strong>${informeActual.nombreFuncionario || 'FUNCIONARIO RESPONSABLE'}</strong><br>
+                    ${informeActual.perfilGIT ? obtenerNombreGIT(informeActual.perfilGIT) : ''}<br>
+                    Vicepresidencia de Planeación, Riesgos y Entorno<br>
+                    Agencia Nacional de Infraestructura
+                </p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // Crear blob y descargar
+    const blob = new Blob(['\ufeff', contenidoWord], {
+        type: 'application/msword'
+    });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Informe_ANI_${informeActual.lugar}_${new Date().toISOString().split('T')[0]}.doc`;
+    link.click();
+}
+
+// Funciones auxiliares para Word
+function generarActividadesWord() {
+    if (!informeActual.actividades?.length) return '<p>No se registraron actividades.</p>';
+    
+    let html = '';
+    informeActual.actividades.forEach((act, i) => {
+        html += `
+            <div class="actividad">
+                <p><strong>${i + 1}. ${act.titulo || 'Actividad'}</strong></p>
+                <p>Fecha: ${formatearFecha(act.fecha)}</p>
+                <p>${act.descripcion || ''}</p>
+        `;
+        
+        // Agregar imágenes si existen
+        if (act.fotos && act.fotos.length > 0) {
+            html += '<p><strong>Registro Fotográfico:</strong></p>';
+            act.fotos.forEach((foto, idx) => {
+                if (foto.datos && foto.datos.startsWith('data:image')) {
+                    html += `
+                        <p style="text-align: center;">
+                            <img src="${foto.datos}" alt="Imagen ${i+1}.${idx+1}">
+                            <br>
+                            <span style="font-size: 9pt;">Imagen ${i+1}.${idx+1}: ${foto.nombre || 'Evidencia fotográfica'}</span>
+                        </p>
+                    `;
+                }
+            });
         }
+        
+        html += '</div>';
+    });
+    return html;
+}
+
+function generarCompromisosWord() {
+    if (!informeActual.compromisos?.length) return '<p>No se establecieron compromisos.</p>';
+    
+    let html = '';
+    informeActual.compromisos.forEach(comp => {
+        html += `
+            <div class="compromiso">
+                <p><strong>${comp.descripcion}</strong></p>
+                <p>Responsable: ${comp.responsable} | Fecha límite: ${formatearFecha(comp.fecha_limite)} | Prioridad: ${comp.prioridad}</p>
+            </div>
+        `;
+    });
+    return html;
+}
+
+function obtenerNombreGIT(git) {
+    const nombres = {
+        'social': 'GIT Social',
+        'predial': 'GIT Predial',
+        'juridico_predial': 'GIT Jurídico Predial',
+        'ambiental': 'GIT Ambiental',
+        'riesgos': 'GIT Riesgos'
+    };
+    return nombres[git] || 'GIT';
+}
     </script>
 </body>
 </html>
+
 
 
 
