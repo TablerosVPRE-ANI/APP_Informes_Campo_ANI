@@ -1,17 +1,22 @@
-// auth.js - Sistema de autenticación con Super Admin
+// auth.js - Sistema de autenticación confiable
 
 class AuthSystem {
     constructor() {
         this.usuarios = [];
         this.currentUser = null;
+        this.supabaseUrl = 'https://frvpwkhifdoimnlcngks.supabase.co';
+        this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZydnB3a2hpZmRvaW1pbGNuZ2tzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczNjc0ODcsImV4cCI6MjA3Mjk0MzQ4N30.J0JQlXfMUaKCsc8I_28FmIAoext8n5b-FMhc04MfGQE';
         this.initializeAuth();
     }
 
     async initializeAuth() {
-        // Intentar cargar desde Supabase si está disponible
-        if (window.APP_STATE?.supabaseConnected) {
-            await this.loadUsersFromSupabase();
-        } else {
+        console.log('🔄 Iniciando sistema de autenticación...');
+        
+        // Siempre intentar cargar desde Supabase primero
+        const supabaseSuccess = await this.loadUsersFromSupabaseDirect();
+        
+        if (!supabaseSuccess) {
+            console.log('📱 Fallback: Cargando desde localStorage');
             this.loadUsersFromLocal();
         }
         
@@ -19,51 +24,68 @@ class AuthSystem {
         this.checkExistingSession();
     }
 
-// Cargar usuarios desde Supabase
-async loadUsersFromSupabase() {
-    try {
-        console.log('🔍 Intentando cargar usuarios desde Supabase...');
-        
-        const { data, error } = await supabase
-            .from('usuarios')
-            .select('*');
+    // Cargar usuarios directamente desde Supabase usando fetch
+    async loadUsersFromSupabaseDirect() {
+        try {
+            console.log('🔍 Conectando directamente a Supabase...');
+            
+            const response = await fetch(`${this.supabaseUrl}/rest/v1/usuarios`, {
+                headers: {
+                    'apikey': this.supabaseKey,
+                    'Authorization': `Bearer ${this.supabaseKey}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
-        if (error) {
-            console.error('❌ Error en consulta Supabase:', error);
-            throw error;
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('📊 Datos recibidos de Supabase:', data);
+
+            if (data && Array.isArray(data) && data.length > 0) {
+                // Filtrar usuarios activos
+                this.usuarios = data.filter(u => u.active === true);
+                this.saveUsersToLocal();
+                console.log(`✅ ${this.usuarios.length} usuarios activos cargados desde Supabase`);
+                console.log('👤 Usuarios:', this.usuarios.map(u => `${u.email} (${u.role})`));
+                return true;
+            } else {
+                console.log('ℹ️ No se encontraron usuarios en Supabase');
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Error al cargar desde Supabase:', error);
+            return false;
         }
-
-        console.log('📊 Datos recibidos de Supabase:', data);
-
-        if (data && data.length > 0) {
-            // Filtrar usuarios activos manualmente por seguridad
-            this.usuarios = data.filter(u => u.active === true);
-            this.saveUsersToLocal();
-            console.log('✅ Usuarios cargados desde Supabase:', this.usuarios.length);
-            console.log('👤 Usuarios activos:', this.usuarios.map(u => u.email));
-        } else {
-            console.log('ℹ️ No hay usuarios en la base de datos.');
-            this.usuarios = [];
-        }
-    } catch (error) {
-        console.warn('⚠️ Error al cargar usuarios desde Supabase:', error);
-        this.loadUsersFromLocal();
     }
-}
 
     // Cargar usuarios desde localStorage
     loadUsersFromLocal() {
-        const savedUsers = localStorage.getItem('ani_usuarios');
-        this.usuarios = savedUsers ? JSON.parse(savedUsers) : [];
-        
-        if (this.usuarios.length === 0) {
-            console.log('ℹ️ No hay usuarios guardados localmente.');
+        try {
+            const savedUsers = localStorage.getItem('ani_usuarios');
+            if (savedUsers) {
+                this.usuarios = JSON.parse(savedUsers);
+                console.log(`📱 ${this.usuarios.length} usuarios cargados desde localStorage`);
+            } else {
+                console.log('ℹ️ No hay usuarios en localStorage');
+                this.usuarios = [];
+            }
+        } catch (error) {
+            console.error('❌ Error al cargar localStorage:', error);
+            this.usuarios = [];
         }
     }
 
     // Guardar usuarios en localStorage
     saveUsersToLocal() {
-        localStorage.setItem('ani_usuarios', JSON.stringify(this.usuarios));
+        try {
+            localStorage.setItem('ani_usuarios', JSON.stringify(this.usuarios));
+            console.log('💾 Usuarios guardados en localStorage');
+        } catch (error) {
+            console.error('❌ Error al guardar en localStorage:', error);
+        }
     }
 
     // Verificar sesión existente
@@ -75,7 +97,7 @@ async loadUsersFromSupabase() {
                 window.APP_STATE = window.APP_STATE || {};
                 window.APP_STATE.currentUser = this.currentUser;
                 window.APP_STATE.currentGit = this.currentUser.git;
-                console.log('✅ Sesión existente encontrada:', this.currentUser.name);
+                console.log('✅ Sesión existente:', this.currentUser.name);
                 return true;
             } catch (error) {
                 console.warn('⚠️ Error al cargar sesión existente');
@@ -88,25 +110,33 @@ async loadUsersFromSupabase() {
     // Iniciar sesión
     async login(email, password) {
         try {
-            // Verificar que hay usuarios
+            console.log(`🔐 Intentando login para: ${email}`);
+            
+            // Si no hay usuarios, intentar cargar nuevamente desde Supabase
             if (this.usuarios.length === 0) {
-                throw new Error('No hay usuarios configurados. Contacte al administrador.');
+                console.log('🔄 No hay usuarios, reintentando carga desde Supabase...');
+                const reloaded = await this.loadUsersFromSupabaseDirect();
+                if (!reloaded) {
+                    throw new Error('No se pudieron cargar los usuarios. Verifique su conexión.');
+                }
             }
 
             // Buscar usuario
             const user = this.usuarios.find(u => 
                 u.email === email && 
                 u.password === password && 
-                u.active
+                u.active === true
             );
 
             if (!user) {
+                console.log('❌ Usuario no encontrado o credenciales incorrectas');
+                console.log('📋 Usuarios disponibles:', this.usuarios.map(u => u.email));
                 throw new Error('Credenciales incorrectas o usuario inactivo.');
             }
 
             // Establecer sesión
             this.currentUser = { ...user };
-            delete this.currentUser.password;
+            delete this.currentUser.password; // No guardar contraseña en sesión
 
             // Guardar sesión
             localStorage.setItem('ani_session', JSON.stringify(this.currentUser));
@@ -142,73 +172,6 @@ async loadUsersFromSupabase() {
         console.log('✅ Sesión cerrada');
     }
 
-    // Crear nuevo usuario
-    async createUser(userData) {
-        try {
-            // Validar permisos
-            if (!this.hasPermission('create_user')) {
-                throw new Error('No tiene permisos para crear usuarios');
-            }
-
-            // Validaciones
-            if (this.usuarios.find(u => u.email === userData.email)) {
-                throw new Error('Ya existe un usuario con ese email');
-            }
-
-            if (this.usuarios.find(u => 
-                u.name.toLowerCase() === userData.name.toLowerCase() && 
-                u.git === userData.git
-            )) {
-                throw new Error('Ya existe un usuario con ese nombre en el mismo GIT');
-            }
-
-            // Crear usuario
-            const newUser = {
-                id: Date.now(),
-                ...userData,
-                git_description: this.getGitDescription(userData.git),
-                active: true,
-                created_at: new Date().toISOString()
-            };
-
-            // Guardar en Supabase primero
-            if (window.APP_STATE?.supabaseConnected) {
-                const savedUser = await this.saveUserToSupabase(newUser);
-                if (savedUser && savedUser[0]) {
-                    newUser.id = savedUser[0].id;
-                }
-            }
-
-            // Guardar localmente
-            this.usuarios.push(newUser);
-            this.saveUsersToLocal();
-
-            console.log('✅ Usuario creado:', newUser.name);
-            return { success: true, user: newUser };
-
-        } catch (error) {
-            console.error('❌ Error al crear usuario:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    // Guardar usuario en Supabase
-    async saveUserToSupabase(user) {
-        try {
-            const { data, error } = await supabase
-                .from('usuarios')
-                .insert([user])
-                .select();
-
-            if (error) throw error;
-            console.log('✅ Usuario guardado en Supabase');
-            return data;
-        } catch (error) {
-            console.warn('⚠️ Error al guardar usuario en Supabase:', error);
-            throw error;
-        }
-    }
-
     // Registrar actividad del usuario
     async logUserActivity(action) {
         if (!this.currentUser) return;
@@ -224,20 +187,30 @@ async loadUsersFromSupabase() {
         };
 
         // Guardar localmente
-        const activities = JSON.parse(localStorage.getItem('ani_user_activities') || '[]');
-        activities.push(activity);
-        if (activities.length > 100) {
-            activities.splice(0, activities.length - 100);
-        }
-        localStorage.setItem('ani_user_activities', JSON.stringify(activities));
-
-        // Guardar en Supabase si está disponible
-        if (window.APP_STATE?.supabaseConnected) {
-            try {
-                await supabase.from('user_activities').insert([activity]);
-            } catch (error) {
-                console.warn('⚠️ Error al registrar actividad en Supabase:', error);
+        try {
+            const activities = JSON.parse(localStorage.getItem('ani_user_activities') || '[]');
+            activities.push(activity);
+            if (activities.length > 100) {
+                activities.splice(0, activities.length - 100);
             }
+            localStorage.setItem('ani_user_activities', JSON.stringify(activities));
+        } catch (error) {
+            console.warn('⚠️ Error al guardar actividad local:', error);
+        }
+
+        // Intentar guardar en Supabase
+        try {
+            await fetch(`${this.supabaseUrl}/rest/v1/user_activities`, {
+                method: 'POST',
+                headers: {
+                    'apikey': this.supabaseKey,
+                    'Authorization': `Bearer ${this.supabaseKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(activity)
+            });
+        } catch (error) {
+            console.warn('⚠️ Error al registrar actividad en Supabase:', error);
         }
     }
 
@@ -285,15 +258,37 @@ async loadUsersFromSupabase() {
 
     // Recargar usuarios desde Supabase
     async refreshUsers() {
-        if (window.APP_STATE?.supabaseConnected) {
-            await this.loadUsersFromSupabase();
-            return { success: true, count: this.usuarios.length };
-        } else {
-            return { success: false, error: 'No hay conexión a Supabase' };
-        }
+        const success = await this.loadUsersFromSupabaseDirect();
+        return { 
+            success: success, 
+            count: this.usuarios.length,
+            message: success ? 'Usuarios actualizados' : 'Error al actualizar usuarios'
+        };
+    }
+
+    // Verificar estado del sistema
+    getSystemStatus() {
+        return {
+            hasUsers: this.usuarios.length > 0,
+            userCount: this.usuarios.length,
+            isLoggedIn: !!this.currentUser,
+            currentUser: this.currentUser ? this.currentUser.name : null,
+            lastUpdate: new Date().toISOString()
+        };
+    }
+
+    // Método para debug - mostrar información del sistema
+    debug() {
+        console.log('🔧 Estado del sistema de autenticación:');
+        console.log('- Usuarios cargados:', this.usuarios.length);
+        console.log('- Usuario actual:', this.currentUser ? this.currentUser.name : 'None');
+        console.log('- Usuarios disponibles:', this.usuarios.map(u => `${u.email} (${u.role})`));
+        return this.getSystemStatus();
     }
 }
 
 // Inicializar sistema de autenticación
-
 window.authSystem = new AuthSystem();
+
+// Función global para debug
+window.debugAuth = () => window.authSystem.debug();
