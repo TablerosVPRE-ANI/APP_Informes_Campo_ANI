@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#004884">
+    <title>ANI Campo - Iniciar Sesión</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #004884;
+            --secondary-color: #0066b3;
+            --success: #28a745;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --border: #dee2e6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #004884 0%, #0066b3 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 24px;
+        }
+
+        .form-container {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(0, 72, 132, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 72, 132, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-message {
+            background: var(--danger);
+            color: white;
+        }
+
+        .success-message {
+            background: var(--success);
+            color: white;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .connection-online {
+            background: var(--success);
+            color: white;
+        }
+
+        .connection-offline {
+            background: #ffc107;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <!-- Indicador de conexión -->
+    <div id="connectionStatus" class="connection-status"></div>
+
+    <div class="auth-container">
+        <div class="login-card">
+            <div class="header">
+                <div class="logo">ANI</div>
+                <h1>ANI Campo</h1>
+                <p>Sistema de Informes de Campo<br>Vicepresidencia de Planeación, Riesgos y Entorno</p>
+            </div>
+            
+            <div class="form-container">
+                <div id="errorMessage" class="message error-message"></div>
+                <div id="successMessage" class="message success-message"></div>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Correo Electrónico</label>
+                        <input type="email" id="email" name="email" placeholder="usuario@ani.gov.co" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="loginBtn">
+                        <span id="loginText">Iniciar Sesión</span>
+                        <div id="loginLoading" class="loading" style="display: none;"></div>
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <p style="font-size: 12px; color: #666;">
+                        ¿Problemas para acceder? Contacte al administrador del sistema
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    
+    <script>
+        // Variables globales
+        let isLoading = false;
+
+        // Elementos del DOM
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginText = document.getElementById('loginText');
+        const loginLoading = document.getElementById('loginLoading');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const connectionStatus = document.getElementById('connectionStatus');
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Inicializar Supabase
+            const supabaseInitialized = initSupabase();
+            if (supabaseInitialized) {
+                window.APP_STATE.supabaseConnected = await testSupabaseConnection();
+            }
+
+            // Actualizar estado de conexión
+            updateConnectionStatus();
+
+            // Verificar sesión existente
+            if (window.authSystem.checkExistingSession()) {
+                showSuccess('Sesión activa encontrada. Redirigiendo...');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+                return;
+            }
+
+            // Event listeners
+            loginForm.addEventListener('submit', handleLogin);
+            window.addEventListener('online', updateConnectionStatus);
+            window.addEventListener('offline', updateConnectionStatus);
+        });
+
+        // Manejar login
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            if (isLoading) return;
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showError('Por favor complete todos los campos');
+                return;
+            }
+
+            setLoading(true);
+            hideMessages();
+
+            try {
+                const result = await window.authSystem.login(email, password);
+
+                if (result.success) {
+                    showSuccess(`¡Bienvenido ${result.user.name}!<br>GIT: ${result.user.git}<br>Redirigiendo...`);
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    showError(result.error || 'Error al iniciar sesión');
+                }
+            } catch (error) {
+                console.error('Error en login:', error);
+                showError('Error de conexión. Intente nuevamente.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Mostrar/ocultar loading
+        function setLoading(loading) {
+            isLoading = loading;
+            loginBtn.disabled = loading;
+            
+            if (loading) {
+                loginText.style.display = 'none';
+                loginLoading.style.display = 'inline-block';
+            } else {
+                loginText.style.display = 'inline';
+                loginLoading.style.display = 'none';
+            }
+        }
+
+        // Mostrar mensajes
+        function showError(message) {
+            hideMessages();
+            errorMessage.innerHTML = message;
+            errorMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            hideMessages();
+            successMessage.innerHTML = message;
+            successMessage.style.display = 'block';
+        }
+
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+
+        // Actualizar estado de conexión
+        function updateConnectionStatus() {
+            const isOnline = navigator.onLine;
+            const status = connectionStatus;
+            
+            if (isOnline) {
+                status.textContent = 'En línea';
+                status.className = 'connection-status connection-online';
+            } else {
+                status.textContent = 'Sin conexión';
+                status.className = 'connection-status connection-offline';
+            }
+
+            window.APP_STATE.isOnline = isOnline;
+        }
+    </script>
+</body>
+</html>
