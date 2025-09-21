@@ -219,9 +219,49 @@ async function logout() {
     }
 }
 </script>
+    <script>
+// Funciones básicas para que la aplicación funcione
+function cambiarSeccion(seccionId, boton) {
+    // Ocultar todas las secciones
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    
+    // Mostrar la sección seleccionada
+    document.getElementById(seccionId).classList.add('active');
+    
+    // Actualizar botones del menú
+    document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+    boton.classList.add('active');
+}
+
+function guardarActividad() {
+    console.log('Función guardarActividad llamada');
+    // Implementar lógica de guardar actividad
+}
+
+function guardarCompromiso() {
+    console.log('Función guardarCompromiso llamada');
+    // Implementar lógica de guardar compromiso
+}
+
+function guardarInforme() {
+    console.log('Función guardarInforme llamada');
+    // Implementar lógica de guardar informe
+}
+
+function sincronizar() {
+    console.log('Función sincronizar llamada');
+    // Implementar lógica de sincronización
+}
+
+function exportarJSON() {
+    console.log('Función exportarJSON llamada');
+    // Implementar lógica de exportar JSON
+}
+</script>
 </body>
 
 </html>
+
 
 
 
