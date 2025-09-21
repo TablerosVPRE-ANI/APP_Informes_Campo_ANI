@@ -19,29 +19,37 @@ class AuthSystem {
         this.checkExistingSession();
     }
 
-    // Cargar usuarios desde Supabase
-    async loadUsersFromSupabase() {
-        try {
-            const { data, error } = await supabase
-                .from('usuarios')
-                .select('*')
-                .eq('active', true);
+// Cargar usuarios desde Supabase
+async loadUsersFromSupabase() {
+    try {
+        console.log('🔍 Intentando cargar usuarios desde Supabase...');
+        
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('*');
 
-            if (error) throw error;
-
-            if (data && data.length > 0) {
-                this.usuarios = data;
-                this.saveUsersToLocal();
-                console.log('✅ Usuarios cargados desde Supabase:', data.length);
-            } else {
-                console.log('ℹ️ No hay usuarios en la base de datos.');
-                this.usuarios = [];
-            }
-        } catch (error) {
-            console.warn('⚠️ Error al cargar usuarios desde Supabase:', error);
-            this.loadUsersFromLocal();
+        if (error) {
+            console.error('❌ Error en consulta Supabase:', error);
+            throw error;
         }
+
+        console.log('📊 Datos recibidos de Supabase:', data);
+
+        if (data && data.length > 0) {
+            // Filtrar usuarios activos manualmente por seguridad
+            this.usuarios = data.filter(u => u.active === true);
+            this.saveUsersToLocal();
+            console.log('✅ Usuarios cargados desde Supabase:', this.usuarios.length);
+            console.log('👤 Usuarios activos:', this.usuarios.map(u => u.email));
+        } else {
+            console.log('ℹ️ No hay usuarios en la base de datos.');
+            this.usuarios = [];
+        }
+    } catch (error) {
+        console.warn('⚠️ Error al cargar usuarios desde Supabase:', error);
+        this.loadUsersFromLocal();
     }
+}
 
     // Cargar usuarios desde localStorage
     loadUsersFromLocal() {
@@ -287,4 +295,5 @@ class AuthSystem {
 }
 
 // Inicializar sistema de autenticación
+
 window.authSystem = new AuthSystem();
