@@ -120,15 +120,37 @@ function guardarActividad() {
     }
 }
 
-// NUEVA FUNCIÓN para abrir el modal con los datos de la actividad
 function abrirModalEdicion(id) {
     const actividad = informe.actividades.find(a => a.id === id);
     if (!actividad) return;
 
+    // Limpiar el input de archivos por si se quedó algo de antes
+    document.getElementById('editActividadNuevasFotos').value = '';
+
+    // Llenar los campos de texto
     document.getElementById('editActividadId').value = actividad.id;
     document.getElementById('editActividadTitulo').value = actividad.titulo;
     document.getElementById('editActividadFecha').value = actividad.fecha;
     document.getElementById('editActividadDescripcion').value = actividad.descripcion;
+
+    // Llenar la galería de fotos existentes
+    const galeria = document.getElementById('editGaleriaFotos');
+    galeria.innerHTML = ''; // Limpiar galería anterior
+
+    if (actividad.fotos && actividad.fotos.length > 0) {
+        actividad.fotos.forEach((foto, index) => {
+            const fotoDiv = document.createElement('div');
+            fotoDiv.style.position = 'relative';
+            fotoDiv.innerHTML = `
+                <img src="${foto.datos}" alt="${foto.nombre}" style="max-width: 80px; height: auto; border-radius: 5px;">
+                <button onclick="eliminarFotoDeActividad(${actividad.id}, ${index})" 
+                        style="position: absolute; top: -5px; right: -5px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px;">×</button>
+            `;
+            galeria.appendChild(fotoDiv);
+        });
+    } else {
+        galeria.innerHTML = '<p style="color: #999; font-size: 12px; margin: auto;">No hay fotos en esta actividad.</p>';
+    }
 
     document.getElementById('modalEdicion').style.display = 'flex';
 }
@@ -138,21 +160,62 @@ function cerrarModalEdicion() {
     document.getElementById('modalEdicion').style.display = 'none';
 }
 
-// NUEVA FUNCIÓN para guardar los cambios de la actividad
-function guardarCambiosActividad() {
+function eliminarFotoDeActividad(actividadId, fotoIndex) {
+    const actividadIndex = informe.actividades.findIndex(a => a.id === actividadId);
+    if (actividadIndex === -1) return;
+
+    // Eliminar la foto del array
+    informe.actividades[actividadIndex].fotos.splice(fotoIndex, 1);
+
+    // Volver a renderizar el modal para que se actualice la vista
+    abrirModalEdicion(actividadId);
+    mostrarNotificacion('Foto eliminada. Guarda los cambios para confirmar.', 'info');
+}
+
+async function guardarCambiosActividad() {
     const id = parseInt(document.getElementById('editActividadId').value);
     const actividadIndex = informe.actividades.findIndex(a => a.id === id);
 
     if (actividadIndex === -1) return;
 
+    // Actualizar datos de texto
     informe.actividades[actividadIndex].titulo = document.getElementById('editActividadTitulo').value;
     informe.actividades[actividadIndex].fecha = document.getElementById('editActividadFecha').value;
     informe.actividades[actividadIndex].descripcion = document.getElementById('editActividadDescripcion').value;
 
+    // Procesar nuevas fotos para añadir
+    const inputNuevasFotos = document.getElementById('editActividadNuevasFotos');
+    if (inputNuevasFotos.files.length > 0) {
+        mostrarNotificacion('Procesando nuevas imágenes...', 'info');
+
+        // Usamos una promesa para esperar a que todas las imágenes se lean
+        await new Promise(resolve => {
+            const totalFiles = inputNuevasFotos.files.length;
+            let filesProcessed = 0;
+
+            Array.from(inputNuevasFotos.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    informe.actividades[actividadIndex].fotos.push({
+                        nombre: file.name,
+                        tipo: file.type,
+                        tamano: file.size,
+                        datos: e.target.result // base64
+                    });
+                    filesProcessed++;
+                    if (filesProcessed === totalFiles) {
+                        resolve(); // Resolvemos la promesa cuando la última imagen se ha procesado
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    }
+
     guardarBorrador();
     actualizarListaActividades();
     cerrarModalEdicion();
-    mostrarNotificacion('✅ Actividad actualizada', 'success');
+    mostrarNotificacion('✅ Actividad actualizada exitosamente', 'success');
 }
 
 // REEMPLAZAR la función existente con esta
@@ -764,6 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarNotificacion('⚠️ Trabajando sin conexión', 'warning');
     });
 });
+
 
 
 
