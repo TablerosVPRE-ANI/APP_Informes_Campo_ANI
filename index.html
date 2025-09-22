@@ -17,22 +17,23 @@
             <p id="projectInfo">Sistema de Informes de Campo</p>
         </div>
     </div>
-    <div class="user-section">
-        <div class="user-info" id="userInfo" style="text-align: right; margin-right: 15px;">
-            <div class="user-name" id="userName" style="font-weight: 600; font-size: 14px; color: white;">Usuario</div>
-            <div class="user-git" id="userGit" style="font-size: 12px; opacity: 0.8; color: white;">GIT</div>
-        </div>
-        <div>
-            <span class="status-indicator" id="connectionStatus"></span>
-            <span id="connectionText" style="font-size: 12px;"></span>
-        </div>
-        <button onclick="logout()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-left: 10px;" title="Cerrar Sesión">
-            🚪
-        </button>
+<div class="user-section">
+    <div class="user-info" id="userInfo" style="text-align: right; margin-right: 15px;">
+        <div class="user-name" id="userName" style="font-weight: 600; font-size: 14px; color: white;">Usuario</div>
+        <div class="user-git" id="userGit" style="font-size: 12px; opacity: 0.8; color: white;">GIT</div>
     </div>
+    <div>
+        <span class="status-indicator" id="connectionStatus"></span>
+        <span id="connectionText" style="font-size: 12px;"></span>
+    </div>
+    <button onclick="logout()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-left: 10px;" title="Cerrar Sesión">
+        🚪
+    </button>
+    <button id="adminBtn" onclick="goToAdmin()" style="display: none; background: #ff6b6b; border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-left: 10px;" title="Administrar Usuarios">
+        👥
+    </button>
 </div>
-
-    <div id="syncStatus" class="sync-status" style="display: none;"></div>
+<div id="syncStatus" class="sync-status" style="display: none;"></div>
 
 <!-- Sección Información Básica -->
 <div id="infoBasica" class="section active">
@@ -193,22 +194,34 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // Configurar interfaz con datos del usuario
+// Esta función ya existe en tu index.html, solo agrega las líneas nuevas
 function setupUserInterface() {
     const user = window.APP_STATE.currentUser;
     if (!user) return;
 
-    // Actualizar header
+    // Actualizar header (esto ya lo tienes)
     document.getElementById('userName').textContent = user.name;
     document.getElementById('userGit').textContent = `GIT: ${user.git}`;
     
-    // Llenar campos de sesión (solo lectura)
+    // Llenar campos de sesión (esto ya lo tienes)
     document.getElementById('funcionarioSession').value = user.name;
     document.getElementById('gitSession').value = `${user.git} - ${user.git_description}`;
     
-    // Actualizar título de la página
+    // AGREGAR ESTA PARTE NUEVA:
+    // Mostrar botón de admin solo para superadmin
+    if (user.role === 'superadmin') {
+        document.getElementById('adminBtn').style.display = 'inline-block';
+    }
+    
+    // Actualizar título de la página (esto ya lo tienes)
     document.title = `ANI Campo - ${user.git}`;
     
     console.log(`Usuario configurado: ${user.name} (${user.git})`);
+}
+
+// AGREGAR ESTA FUNCIÓN NUEVA (puede ir después de la función logout)
+function goToAdmin() {
+    window.location.href = 'admin-usuarios.html';
 }
 
 // Cerrar sesión
@@ -261,6 +274,7 @@ function exportarJSON() {
 </body>
 
 </html>
+
 
 
 
