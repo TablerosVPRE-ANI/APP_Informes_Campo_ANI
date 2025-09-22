@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Usuarios - ANI Campo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, #004884 0%, #0066cc 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-title h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            text-align: right;
+            font-size: 14px;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .admin-content {
+            padding: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab.active {
+            color: #004884;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #004884;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .form-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #004884;
+            box-shadow: 0 0 0 3px rgba(0, 72, 132, 0.1);
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .btn-generate {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #004884;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-generate:hover {
+            background: #00366b;
+        }
+
+        .form-actions {
+            margin-top: 25px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #004884;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #00366b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 72, 132, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .users-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-active {
+            background: #d4f4dd;
+            color: #27ae60;
+        }
+
+        .badge-inactive {
+            background: #ffeaa7;
+            color: #fdcb6e;
+        }
+
+        .badge-superadmin {
+            background: #e17055;
+            color: white;
+        }
+
+        .badge-admin {
+            background: #74b9ff;
+            color: white;
+        }
+
+        .badge-coordinador {
+            background: #a29bfe;
+            color: white;
+        }
+
+        .badge-funcionario {
+            background: #81ecec;
+            color: #00b894;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .btn-icon:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        .btn-edit {
+            color: #3498db;
+        }
+
+        .btn-delete {
+            color: #e74c3c;
+        }
+
+        .btn-toggle {
+            color: #f39c12;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4f4dd;
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+
+        .alert-error {
+            background: #ffe0e0;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            animation: scaleIn 0.3s;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-actions {
+            margin-top: 25px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <div class="admin-title">
+                <span style="font-size: 30px;">👥</span>
+                <h1>Administración de Usuarios</h1>
+            </div>
+            <div class="user-info">
+                <div id="adminName">LEON ALEJANDRO ORTEGA</div>
+                <div style="opacity: 0.8; font-size: 12px;">Super Administrador</div>
+                <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <div class="admin-content">
+            <div id="alertContainer"></div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalUsers">0</div>
+                    <div class="stat-label">Total Usuarios</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #00d2ff 0%, #3a47d5 100%);">
+                    <div class="stat-number" id="activeUsers">0</div>
+                    <div class="stat-label">Usuarios Activos</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="stat-number" id="totalGits">8</div>
+                    <div class="stat-label">GITs Disponibles</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="stat-number" id="lastLogin">Hoy</div>
+                    <div class="stat-label">Último Acceso</div>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('create')">➕ Crear Usuario</button>
+                <button class="tab" onclick="switchTab('list')">📋 Lista de Usuarios</button>
+                <button class="tab" onclick="switchTab('bulk')">📦 Carga Masiva</button>
+            </div>
+
+            <!-- TAB: Crear Usuario -->
+            <div id="create-tab" class="tab-content active">
+                <div class="form-section">
+                    <div class="form-title">
+                        <span>👤</span>
+                        <span>Información del Nuevo Usuario</span>
+                    </div>
+                    
+                    <form id="createUserForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="name">Nombre Completo *</label>
+                                <input type="text" id="name" name="name" required placeholder="Ej: Juan Pérez García">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="email">Correo Electrónico *</label>
+                                <input type="email" id="email" name="email" required placeholder="usuario@ani.gov.co">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="password">Contraseña *</label>
+                                <div class="password-container">
+                                    <input type="text" id="password" name="password" required placeholder="Mínimo 8 caracteres">
+                                    <button type="button" class="btn-generate" onclick="generatePassword()">Generar</button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="role">Rol *</label>
+                                <select id="role" name="role" required>
+                                    <option value="">-- Seleccionar Rol --</option>
+                                    <option value="funcionario">Funcionario</option>
+                                    <option value="coordinador">Coordinador</option>
+                                    <option value="admin">Administrador</option>
+                                    <option value="superadmin">Super Administrador</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="git">GIT Asignado *</label>
+                                <select id="git" name="git" required onchange="updateGitDescription()">
+                                    <option value="">-- Seleccionar GIT --</option>
+                                    <option value="Social">GIT Social</option>
+                                    <option value="Predial">GIT Predial</option>
+                                    <option value="Ambiental">GIT Ambiental</option>
+                                    <option value="JuridicoPredial">GIT Jurídico Predial</option>
+                                    <option value="Riesgos">GIT Riesgos</option>
+                                    <option value="Valorizacion">GIT Valorización</option>
+                                    <option value="TICs">GIT TICs</option>
+                                    <option value="SuperAdmin">Super Admin</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="git_description">Descripción GIT</label>
+                                <input type="text" id="git_description" name="git_description" readonly placeholder="Se completa automáticamente">
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <span>✅</span> Crear Usuario
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                <span>🔄</span> Limpiar Formulario
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TAB: Lista de Usuarios -->
+            <div id="list-tab" class="tab-content">
+                <div class="users-table">
+                    <div class="table-header">
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="🔍 Buscar por nombre o email..." onkeyup="filterUsers()">
+                            <select class="filter-select" id="gitFilter" onchange="filterUsers()">
+                                <option value="">Todos los GITs</option>
+                                <option value="Social">GIT Social</option>
+                                <option value="Predial">GIT Predial</option>
+                                <option value="Ambiental">GIT Ambiental</option>
+                                <option value="JuridicoPredial">GIT Jurídico Predial</option>
+                                <option value="Riesgos">GIT Riesgos</option>
+                                <option value="Valorizacion">GIT Valorización</option>
+                                <option value="TICs">GIT TICs</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadUsers()">
+                            <span>🔄</span> Actualizar
+                        </button>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th>GIT</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Los usuarios se cargarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: Carga Masiva -->
+            <div id="bulk-tab" class="tab-content">
+                <div class="form-section">
+                    <div class="form-title">
+                        <span>📦</span>
+                        <span>Crear Múltiples Usuarios</span>
+                    </div>
+                    
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="color: #1976d2; font-size: 14px;">
+                            <strong>Formato CSV requerido:</strong><br>
+                            nombre,email,password,role,git<br>
+                            Juan Pérez,juan@ani.gov.co,Pass2025*,funcionario,Social<br>
+                            María García,maria@ani.gov.co,Pass2025*,coordinador,Predial
+                        </p>
+                    </div>
+                    
+                    <textarea id="bulkData" rows="10" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: monospace; font-size: 13px;" placeholder="Pegue aquí los datos CSV o escriba línea por línea..."></textarea>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="processBulkUsers()">
+                            <span>⬆️</span> Procesar y Crear Usuarios
+                        </button>
+                        <button class="btn btn-secondary" onclick="downloadTemplate()">
+                            <span>⬇️</span> Descargar Plantilla CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Confirmar Acción</h3>
+            </div>
+            <div id="modalMessage"></div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="confirmAction()">Confirmar</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://frvpwkhifdoimlcngks.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZydnB3a2hpZmRvaW1ubGNuZ2tzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczNjc0ODcsImV4cCI6MjA3Mjk0MzQ4N30.J0JQlXfMUaKCsc8I_28FmIAoext8n5b-FMhc04MfGQE';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let currentAction = null;
+        let currentUserId = null;
+
+        // Verificar que el usuario es Super Admin
+        function checkSuperAdmin() {
+            const user = JSON.parse(localStorage.getItem('ani_current_user') || '{}');
+            if (!user.role || user.role !== 'superadmin') {
+                alert('⛔ Acceso Denegado\n\nSolo el Super Administrador puede acceder a este módulo.');
+                window.location.href = 'index.html';
+                return false;
+            }
+            document.getElementById('adminName').textContent = user.name || 'Super Admin';
+            return true;
+        }
+
+        // Cambiar entre tabs
+        function switchTab(tabName) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Desactivar todos los botones de tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activar el tab seleccionado
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            // Cargar usuarios si es el tab de lista
+            if (tabName === 'list') {
+                loadUsers();
+            }
+        }
+
+        // Generar contraseña segura
+        function generatePassword() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+            let password = '';
+            for (let i = 0; i < 12; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('password').value = password;
+        }
+
+        // Actualizar descripción del GIT
+        function updateGitDescription() {
+            const git = document.getElementById('git').value;
+            const descriptions = {
+                'Social': 'GIT Social - Gestión Social',
+                'Predial': 'GIT Predial - Gestión de Predios',
+                'Ambiental': 'GIT Ambiental - Gestión Ambiental',
+                'JuridicoPredial': 'GIT Jurídico Predial - Gestión Legal',
+                'Riesgos': 'GIT Riesgos - Gestión de Riesgos',
+                'Valorizacion': 'GIT Valorización - Gestión de Valorización',
+                'TICs': 'GIT TICs - Tecnologías de la Información',
+                'SuperAdmin': 'Super Administrador del Sistema'
+            };
+            document.getElementById('git_description').value = descriptions[git] || '';
+        }
+
+        // Crear usuario individual
+        document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const userData = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                role: formData.get('role'),
+                git: formData.get('git'),
+                git_description: formData.get('git_description'),
+                active: true
+            };
+
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .insert([userData]);
+
+                if (error) throw error;
+
+                showAlert('success', `✅ Usuario ${userData.name} creado exitosamente`);
+                e.target.reset();
+                updateStats();
+            } catch (error) {
+                showAlert('error', `❌ Error: ${error.message}`);
+            }
+        });
+
+        // Cargar usuarios
+        async function loadUsers() {
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                displayUsers(data);
+                updateStats();
+            } catch (error) {
+                showAlert('error', `❌ Error al cargar usuarios: ${error.message}`);
+            }
+        }
+
+        // Mostrar usuarios en la tabla
+        function displayUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            users.forEach(user => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td><span class="badge badge-${user.role}">${user.role}</span></td>
+                    <td>${user.git}</td>
+                    <td><span class="badge badge-${user.active ? 'active' : 'inactive'}">${user.active ? 'Activo' : 'Inactivo'}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-icon btn-edit" onclick="editUser(${user.id})" title="Editar">✏️</button>
+                            <button class="btn-icon btn-toggle" onclick="toggleUserStatus(${user.id}, ${user.active})" title="${user.active ? 'Desactivar' : 'Activar'}">
+                                ${user.active ? '🔒' : '🔓'}
+                            </button>
+                            <button class="btn-icon btn-delete" onclick="deleteUser(${user.id})" title="Eliminar">🗑️</button>
+                        </div>
+                    </td>
+                `;
+            });
+        }
+
+        // Filtrar usuarios
+        function filterUsers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const gitFilter = document.getElementById('gitFilter').value;
+            
+            const rows = document.querySelectorAll('#usersTableBody tr');
+            rows.forEach(row => {
+                const name = row.cells[1].textContent.toLowerCase();
+                const email = row.cells[2].textContent.toLowerCase();
+                const git = row.cells[4].textContent;
+                
+                const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
+                const matchesGit = !gitFilter || git === gitFilter;
+                
+                row.style.display = matchesSearch && matchesGit ? '' : 'none';
+            });
+        }
+
+        // Activar/Desactivar usuario
+        async function toggleUserStatus(userId, currentStatus) {
+            currentUserId = userId;
+            currentAction = 'toggle';
+            
+            const action = currentStatus ? 'desactivar' : 'activar';
+            document.getElementById('modalTitle').textContent = 'Confirmar Cambio de Estado';
+            document.getElementById('modalMessage').textContent = `¿Está seguro de que desea ${action} este usuario?`;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        // Eliminar usuario
+        async function deleteUser(userId) {
+            currentUserId = userId;
+            currentAction = 'delete';
+            
+            document.getElementById('modalTitle').textContent = 'Confirmar Eliminación';
+            document.getElementById('modalMessage').textContent = '⚠️ Esta acción no se puede deshacer. ¿Está seguro de eliminar este usuario?';
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        // Confirmar acción del modal
+        async function confirmAction() {
+            try {
+                if (currentAction === 'toggle') {
+                    const { data: user } = await supabase
+                        .from('usuarios')
+                        .select('active')
+                        .eq('id', currentUserId)
+                        .single();
+                    
+                    const { error } = await supabase
+                        .from('usuarios')
+                        .update({ active: !user.active })
+                        .eq('id', currentUserId);
+                    
+                    if (error) throw error;
+                    showAlert('success', '✅ Estado actualizado correctamente');
+                    
+                } else if (currentAction === 'delete') {
+                    const { error } = await supabase
+                        .from('usuarios')
+                        .delete()
+                        .eq('id', currentUserId);
+                    
+                    if (error) throw error;
+                    showAlert('success', '✅ Usuario eliminado correctamente');
+                }
+                
+                closeModal();
+                loadUsers();
+                updateStats();
+            } catch (error) {
+                showAlert('error', `❌ Error: ${error.message}`);
+                closeModal();
+            }
+        }
+
+        // Cerrar modal
+        function closeModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+            currentAction = null;
+            currentUserId = null;
+        }
+
+        // Editar usuario
+        function editUser(userId) {
+            // Por ahora, mostrar alerta de función en desarrollo
+            showAlert('info', 'ℹ️ Función de edición en desarrollo. Use eliminar y crear nuevo por ahora.');
+        }
+
+        // Procesar carga masiva de usuarios
+        async function processBulkUsers() {
+            const bulkData = document.getElementById('bulkData').value.trim();
+            
+            if (!bulkData) {
+                showAlert('error', '❌ Por favor, ingrese los datos CSV');
+                return;
+            }
+            
+            const lines = bulkData.split('\n').filter(line => line.trim());
+            const users = [];
+            
+            // Procesar cada línea
+            lines.forEach((line, index) => {
+                // Saltar encabezados si los hay
+                if (index === 0 && line.toLowerCase().includes('nombre')) {
+                    return;
+                }
+                
+                const parts = line.split(',').map(p => p.trim());
+                
+                if (parts.length >= 5) {
+                    const gitDescriptions = {
+                        'Social': 'GIT Social - Gestión Social',
+                        'Predial': 'GIT Predial - Gestión de Predios',
+                        'Ambiental': 'GIT Ambiental - Gestión Ambiental',
+                        'JuridicoPredial': 'GIT Jurídico Predial - Gestión Legal',
+                        'Riesgos': 'GIT Riesgos - Gestión de Riesgos',
+                        'Valorizacion': 'GIT Valorización - Gestión de Valorización',
+                        'TICs': 'GIT TICs - Tecnologías de la Información',
+                        'SuperAdmin': 'Super Administrador del Sistema'
+                    };
+                    
+                    users.push({
+                        name: parts[0],
+                        email: parts[1],
+                        password: parts[2],
+                        role: parts[3],
+                        git: parts[4],
+                        git_description: gitDescriptions[parts[4]] || `GIT ${parts[4]}`,
+                        active: true
+                    });
+                }
+            });
+            
+            if (users.length === 0) {
+                showAlert('error', '❌ No se encontraron datos válidos para procesar');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .insert(users);
+                
+                if (error) throw error;
+                
+                showAlert('success', `✅ ${users.length} usuarios creados exitosamente`);
+                document.getElementById('bulkData').value = '';
+                updateStats();
+            } catch (error) {
+                showAlert('error', `❌ Error al crear usuarios: ${error.message}`);
+            }
+        }
+
+        // Descargar plantilla CSV
+        function downloadTemplate() {
+            const csvContent = `nombre,email,password,role,git
+Juan Pérez García,juan.perez@ani.gov.co,JPerez2025*,funcionario,Social
+María López Rodríguez,maria.lopez@ani.gov.co,MLopez2025*,coordinador,Predial
+Carlos Martínez Silva,carlos.martinez@ani.gov.co,CMartinez2025*,funcionario,Ambiental
+Ana García Torres,ana.garcia@ani.gov.co,AGarcia2025*,admin,JuridicoPredial
+Pedro Sánchez Ruiz,pedro.sanchez@ani.gov.co,PSanchez2025*,coordinador,Riesgos`;
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'plantilla_usuarios_ani.csv';
+            link.click();
+        }
+
+        // Mostrar alertas
+        function showAlert(type, message) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} show`;
+            alertDiv.textContent = message;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.classList.remove('show');
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 5000);
+        }
+
+        // Actualizar estadísticas
+        async function updateStats() {
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .select('*');
+                
+                if (error) throw error;
+                
+                const totalUsers = data.length;
+                const activeUsers = data.filter(u => u.active).length;
+                
+                document.getElementById('totalUsers').textContent = totalUsers;
+                document.getElementById('activeUsers').textContent = activeUsers;
+            } catch (error) {
+                console.error('Error al actualizar estadísticas:', error);
+            }
+        }
+
+        // Limpiar formulario
+        function resetForm() {
+            document.getElementById('createUserForm').reset();
+            document.getElementById('git_description').value = '';
+        }
+
+        // Cerrar sesión
+        function logout() {
+            if (confirm('¿Está seguro de cerrar sesión?')) {
+                localStorage.removeItem('ani_session');
+                localStorage.removeItem('ani_current_user');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkSuperAdmin()) {
+                updateStats();
+            }
+        });
+
+// Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('confirmModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
