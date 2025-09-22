@@ -263,9 +263,30 @@
             document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
             boton.classList.add('active');
         }
+        <div id="modalEdicion" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="form-title">✏️ Editar Actividad</div>
+        <input type="hidden" id="editActividadId">
+        
+        <label>Título de la actividad</label>
+        <input type="text" id="editActividadTitulo" placeholder="Título de la actividad">
+        
+        <label>Fecha y Hora</label>
+        <input type="datetime-local" id="editActividadFecha">
+        
+        <label>Descripción</label>
+        <textarea id="editActividadDescripcion" placeholder="Descripción detallada"></textarea>
+        
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="cerrarModalEdicion()">Cancelar</button>
+            <button class="btn btn-primary" onclick="guardarCambiosActividad()">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
     </script>
 </body>
 </html>
+
 
 
 
