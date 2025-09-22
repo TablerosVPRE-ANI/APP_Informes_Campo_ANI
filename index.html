@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#004884">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
-    <title>ANI Campo - Canal del Dique</title>
+    <title>ANI Comisiones -</title>
 </head>
 <body>
     <div class="header">
@@ -64,8 +64,11 @@
         Nombre del Proyecto / Corredor Vial *
     </label>
     <input type="text" id="nombreProyecto" placeholder="Ej: Canal del Dique, Corredor Santana-Mocoa-Neiva" required>
+            
     <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">
         Nombre del funcionario *
+    </label>
+    <input type="text" id="nombreFuncionario" placeholder="Nombre completo" required>
             
             <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">
                 Lugar específico *
@@ -263,7 +266,9 @@
             document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
             boton.classList.add('active');
         }
-        <div id="modalEdicion" class="modal-overlay" style="display: none;">
+
+    </script>
+<div id="modalEdicion" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <div class="form-title">✏️ Editar Actividad</div>
         <input type="hidden" id="editActividadId">
@@ -283,9 +288,9 @@
         </div>
     </div>
 </div>
-    </script>
 </body>
 </html>
+
 
 
 
