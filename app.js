@@ -133,19 +133,22 @@ function guardarActividad() {
     }
 }
 
-// Actualizar visualización de actividades con fotos
+// Actualizar visualización de actividades con FOTOS VISIBLES
 function actualizarListaActividades() {
     const lista = document.getElementById('listaActividades');
     
-    if (informe.actividades.length === 0) {
+    if (!informe.actividades || informe.actividades.length === 0) {
         lista.innerHTML = '<div class="form-section"><p style="color: #666; text-align: center;">No hay actividades registradas</p></div>';
         return;
     }
     
-    let html = '<div class="form-section"><div class="form-title">Actividades Registradas (' + 
-               informe.actividades.length + ')</div>';
+    // Ordenar actividades de la más reciente a la más antigua
+    const actividadesOrdenadas = informe.actividades.sort((a, b) => b.id - a.id);
     
-    informe.actividades.forEach(act => {
+    let html = '<div class="form-section"><div class="form-title">Actividades Registradas (' +
+               actividadesOrdenadas.length + ')</div>';
+    
+    actividadesOrdenadas.forEach(act => {
         const fechaFormateada = act.fecha ? new Date(act.fecha).toLocaleString('es-CO', {
             day: '2-digit',
             month: 'short',
@@ -154,18 +157,28 @@ function actualizarListaActividades() {
             minute: '2-digit'
         }) : 'Sin fecha';
         
+        // Crear la galería de fotos
+        let galeriaHTML = '';
+        if (act.fotos && act.fotos.length > 0) {
+            galeriaHTML = '<div class="galeria-fotos" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">';
+            act.fotos.forEach(foto => {
+                // Usamos los datos en base64 para el src de la imagen
+                galeriaHTML += `<img src="${foto.datos}" alt="${foto.nombre}" style="max-width: 80px; height: auto; border-radius: 5px; border: 1px solid #ccc;">`;
+            });
+            galeriaHTML += '</div>';
+        }
+        
         html += `
             <div class="actividad-item" style="position: relative;">
                 <button onclick="eliminarActividad(${act.id})" 
                         style="position: absolute; right: 5px; top: 5px; 
                                background: #ff4444; color: white; border: none; 
                                border-radius: 50%; width: 25px; height: 25px; 
-                               cursor: pointer; font-size: 16px;">×</button>
+                               cursor: pointer; font-size: 16px; line-height: 25px;">×</button>
                 <strong>${act.titulo}</strong><br>
                 <small>📅 ${fechaFormateada}</small><br>
-                <p style="margin-top: 5px;">${act.descripcion || 'Sin descripción'}</p>
-                ${act.fotos && act.fotos.length > 0 ? 
-                    `<p style="color: #004884; font-size: 12px;">📷 ${act.fotos.length} foto(s) adjunta(s)</p>` : ''}
+                <p style="margin-top: 5px; margin-bottom: 5px;">${act.descripcion || 'Sin descripción'}</p>
+                ${galeriaHTML}
             </div>
         `;
     });
@@ -227,45 +240,7 @@ function eliminarCompromiso(id) {
     }
 }
 
-// Actualizar lista de actividades
-function actualizarListaActividades() {
-    const lista = document.getElementById('listaActividades');
-    
-    if (informe.actividades.length === 0) {
-        lista.innerHTML = '<div class="form-section"><p style="color: #666; text-align: center;">No hay actividades registradas</p></div>';
-        return;
-    }
-    
-    let html = '<div class="form-section"><div class="form-title">Actividades Registradas (' + 
-               informe.actividades.length + ')</div>';
-    
-    informe.actividades.forEach(act => {
-        const fechaFormateada = act.fecha ? new Date(act.fecha).toLocaleString('es-CO', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }) : 'Sin fecha';
-        
-        html += `
-            <div class="actividad-item" style="position: relative;">
-                <button onclick="eliminarActividad(${act.id})" 
-                        style="position: absolute; right: 5px; top: 5px; 
-                               background: #ff4444; color: white; border: none; 
-                               border-radius: 50%; width: 25px; height: 25px; 
-                               cursor: pointer; font-size: 16px;">×</button>
-                <strong>${act.titulo}</strong><br>
-                <small>📅 ${fechaFormateada}</small><br>
-                <p style="margin-top: 5px;">${act.descripcion || 'Sin descripción'}</p>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    lista.innerHTML = html;
-}
-
+   
 // Actualizar lista de compromisos
 function actualizarListaCompromisos() {
     const lista = document.getElementById('listaCompromisos');
@@ -765,4 +740,5 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarNotificacion('⚠️ Trabajando sin conexión', 'warning');
     });
 });
+
 
