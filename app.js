@@ -1,7 +1,7 @@
 // Estado de la aplicación - ACTUALIZAR
 let informe = {
     id: Date.now(),
-    proyecto: 'Canal del Dique',
+    proyecto: '',
     perfilGIT: '',  // <-- NUEVO
     nombreFuncionario: '',  // <-- NUEVO
     lugar: 'Cartagena',
@@ -120,56 +120,89 @@ function guardarActividad() {
     }
 }
 
-// Actualizar visualización de actividades con FOTOS VISIBLES
+// NUEVA FUNCIÓN para abrir el modal con los datos de la actividad
+function abrirModalEdicion(id) {
+    const actividad = informe.actividades.find(a => a.id === id);
+    if (!actividad) return;
+
+    document.getElementById('editActividadId').value = actividad.id;
+    document.getElementById('editActividadTitulo').value = actividad.titulo;
+    document.getElementById('editActividadFecha').value = actividad.fecha;
+    document.getElementById('editActividadDescripcion').value = actividad.descripcion;
+
+    document.getElementById('modalEdicion').style.display = 'flex';
+}
+
+// NUEVA FUNCIÓN para cerrar el modal
+function cerrarModalEdicion() {
+    document.getElementById('modalEdicion').style.display = 'none';
+}
+
+// NUEVA FUNCIÓN para guardar los cambios de la actividad
+function guardarCambiosActividad() {
+    const id = parseInt(document.getElementById('editActividadId').value);
+    const actividadIndex = informe.actividades.findIndex(a => a.id === id);
+
+    if (actividadIndex === -1) return;
+
+    informe.actividades[actividadIndex].titulo = document.getElementById('editActividadTitulo').value;
+    informe.actividades[actividadIndex].fecha = document.getElementById('editActividadFecha').value;
+    informe.actividades[actividadIndex].descripcion = document.getElementById('editActividadDescripcion').value;
+
+    guardarBorrador();
+    actualizarListaActividades();
+    cerrarModalEdicion();
+    mostrarNotificacion('✅ Actividad actualizada', 'success');
+}
+
+// REEMPLAZAR la función existente con esta
 function actualizarListaActividades() {
     const lista = document.getElementById('listaActividades');
-    
+
     if (!informe.actividades || informe.actividades.length === 0) {
         lista.innerHTML = '<div class="form-section"><p style="color: #666; text-align: center;">No hay actividades registradas</p></div>';
         return;
     }
-    
-    // Ordenar actividades de la más reciente a la más antigua
+
     const actividadesOrdenadas = informe.actividades.sort((a, b) => b.id - a.id);
-    
+
     let html = '<div class="form-section"><div class="form-title">Actividades Registradas (' +
                actividadesOrdenadas.length + ')</div>';
-    
+
     actividadesOrdenadas.forEach(act => {
         const fechaFormateada = act.fecha ? new Date(act.fecha).toLocaleString('es-CO', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
         }) : 'Sin fecha';
-        
-        // Crear la galería de fotos
+
         let galeriaHTML = '';
         if (act.fotos && act.fotos.length > 0) {
             galeriaHTML = '<div class="galeria-fotos" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">';
             act.fotos.forEach(foto => {
-                // Usamos los datos en base64 para el src de la imagen
                 galeriaHTML += `<img src="${foto.datos}" alt="${foto.nombre}" style="max-width: 80px; height: auto; border-radius: 5px; border: 1px solid #ccc;">`;
             });
             galeriaHTML += '</div>';
         }
-        
+
         html += `
             <div class="actividad-item" style="position: relative;">
-                <button onclick="eliminarActividad(${act.id})" 
-                        style="position: absolute; right: 5px; top: 5px; 
-                               background: #ff4444; color: white; border: none; 
-                               border-radius: 50%; width: 25px; height: 25px; 
-                               cursor: pointer; font-size: 16px; line-height: 25px;">×</button>
+                <div style="position: absolute; right: 5px; top: 5px; display: flex; gap: 5px;">
+                    <button onclick="abrirModalEdicion(${act.id})" title="Editar"
+                            style="background: #007bff; color: white; border: none; 
+                                   border-radius: 50%; width: 25px; height: 25px; 
+                                   cursor: pointer; font-size: 14px; line-height: 25px;">✏️</button>
+                    <button onclick="eliminarActividad(${act.id})" title="Eliminar"
+                            style="background: #ff4444; color: white; border: none; 
+                                   border-radius: 50%; width: 25px; height: 25px; 
+                                   cursor: pointer; font-size: 16px; line-height: 25px;">×</button>
+                </div>
                 <strong>${act.titulo}</strong><br>
                 <small>📅 ${fechaFormateada}</small><br>
-                <p style="margin-top: 5px; margin-bottom: 5px;">${act.descripcion || 'Sin descripción'}</p>
+                <p style="margin-top: 5px; margin-bottom: 5px; padding-right: 60px;">${act.descripcion || 'Sin descripción'}</p>
                 ${galeriaHTML}
             </div>
         `;
     });
-    
+
     html += '</div>';
     lista.innerHTML = html;
 }
@@ -274,12 +307,14 @@ function actualizarListaCompromisos() {
 function guardarBorrador() {
     const perfilGIT = document.getElementById('perfilGIT');
     const nombreFuncionario = document.getElementById('nombreFuncionario');
+    const nombreProyecto = document.getElementById('nombreProyecto');
     const lugar = document.getElementById('lugar');
     const fechaSalida = document.getElementById('fechaSalida');
     const fechaRegreso = document.getElementById('fechaRegreso');
     const objeto = document.getElementById('objeto');
     const participantes = document.getElementById('participantes');
     
+    if (nombreProyecto) informe.proyecto = nombreProyecto.value;
     if (perfilGIT) informe.perfilGIT = perfilGIT.value;
     if (nombreFuncionario) informe.nombreFuncionario = nombreFuncionario.value;
     if (lugar) informe.lugar = lugar.value || 'Cartagena';
@@ -644,6 +679,7 @@ function cargarBorrador() {
             informe = JSON.parse(borrador);
             
             // Restaurar valores en formulario
+            const nombreProyecto = document.getElementById('nombreProyecto');
             const perfilGIT = document.getElementById('perfilGIT');
             const nombreFuncionario = document.getElementById('nombreFuncionario');
             const lugar = document.getElementById('lugar');
@@ -652,6 +688,7 @@ function cargarBorrador() {
             const objeto = document.getElementById('objeto');
             const participantes = document.getElementById('participantes');
             
+            if (nombreProyecto) nombreProyecto.value = informe.proyecto || '';
             if (perfilGIT) perfilGIT.value = informe.perfilGIT || '';
             if (nombreFuncionario) nombreFuncionario.value = informe.nombreFuncionario || '';
             if (lugar) lugar.value = informe.lugar || 'Cartagena';
@@ -727,6 +764,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarNotificacion('⚠️ Trabajando sin conexión', 'warning');
     });
 });
+
 
 
 
