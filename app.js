@@ -1,16 +1,3 @@
-// ============ CONFIGURACIÓN SUPABASE ============
-// IMPORTANTE: Reemplaza estos valores con los tuyos
-const SUPABASE_URL = "https://frvpwkhifdoimnlcngks.supabase.co";  // <-- CAMBIA ESTO
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZydnB3a2hpZmRvaW1ubGNuZ2tzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczNjc0ODcsImV4cCI6MjA3Mjk0MzQ4N30.J0JQlXfMUaKCsc8I_28FmIAoext8n5b-FMhc04MfGQE";  // <-- CAMBIA ESTO
-
-// Inicializar Supabase (solo si está disponible)
-let supabase = null;
-if (typeof window !== 'undefined' && window.supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('✅ Supabase conectado');
-} else {
-    console.log('⚠️ Supabase no disponible - trabajando offline');
-}
 // Estado de la aplicación - ACTUALIZAR
 let informe = {
     id: Date.now(),
@@ -740,5 +727,6 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarNotificacion('⚠️ Trabajando sin conexión', 'warning');
     });
 });
+
 
 
