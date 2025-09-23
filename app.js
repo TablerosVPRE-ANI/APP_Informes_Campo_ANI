@@ -512,17 +512,88 @@ async function sincronizar() {
     
     try {
         // --- (Toda la lógica de subida de datos que ya tenías) ---
+// Preparar datos del informe para enviar a Supabase
         const datosInforme = {
-            // ... tus datos del informe
+            informe_id: String(informe.id), // Clave Primaria
+            proyecto: informe.proyecto,
+            lugar: informe.lugar,
+            fecha_salida: informe.fechaSalida || null,
+            fecha_regreso: informe.fechaRegreso || null,
+            objeto: informe.objeto,
+            participantes: informe.participantes,
+            estado: 'sincronizado',
+            usuario: informe.nombreFuncionario || 'funcionario_campo',
+            git: informe.perfilGIT || '',
+            ultima_modificacion: new Date().toISOString(),
+            datos_completos: informe // Opcional: Guarda todo el informe en formato JSON por si acaso
         };
         const { error: errorInforme } = await supabase
             .from('informes')
             .upsert(datosInforme, { onConflict: 'informe_id' });
 
-        if (errorInforme) throw errorInforme;
-        // ... (Tu lógica para subir actividades y compromisos) ...
+if (errorInforme) throw errorInforme;
 
-        // --- (Fin de la lógica de subida) ---
+        // =================================================================
+        // INICIO: LÓGICA PARA SUBIR ACTIVIDADES Y COMPROMISOS
+        // =================================================================
+
+        // 1. Sincronizar Actividades
+        if (informe.actividades && informe.actividades.length > 0) {
+            // Para evitar duplicados, primero borramos las actividades que ya existían para este informe.
+            // Esto asegura que si eliminaste una actividad en la app, también se elimina en la base de datos.
+            await supabase
+                .from('actividades')
+                .delete()
+                .eq('informe_id', String(informe.id));
+
+            // Ahora, preparamos las nuevas actividades para insertarlas.
+            // Mapeamos los datos de la app a los nombres de las columnas de tu tabla.
+            const actividadesParaGuardar = informe.actividades.map(act => ({
+                informe_id: String(informe.id),
+                titulo: act.titulo,
+                fecha: act.fecha || null,
+                descripcion: act.descripcion
+                // NOTA: Las fotos en Base64 se guardan dentro de 'datos_completos' en la tabla principal.
+                // La subida a Supabase Storage es un paso que podemos implementar después.
+            }));
+
+            // Insertamos todas las nuevas actividades en la base de datos.
+            const { error: errorActividades } = await supabase
+                .from('actividades')
+                .insert(actividadesParaGuardar);
+            
+            if (errorActividades) throw errorActividades;
+        }
+
+        // 2. Sincronizar Compromisos (sigue la misma lógica que las actividades)
+        if (informe.compromisos && informe.compromisos.length > 0) {
+            // Borramos los compromisos viejos
+            await supabase
+                .from('compromisos')
+                .delete()
+                .eq('informe_id', String(informe.id));
+            
+            // Preparamos los nuevos compromisos
+            const compromisosParaGuardar = informe.compromisos.map(comp => ({
+                informe_id: String(informe.id),
+                descripcion: comp.descripcion,
+                responsable: comp.responsable,
+                fecha_limite: comp.fechaLimite || null,
+                prioridad: comp.prioridad,
+                estado: comp.estado || 'pendiente'
+            }));
+
+            // Insertamos los nuevos compromisos
+            const { error: errorCompromisos } = await supabase
+                .from('compromisos')
+                .insert(compromisosParaGuardar);
+            
+            if (errorCompromisos) throw errorCompromisos;
+        }
+
+        // =================================================================
+        // FIN: LÓGICA PARA SUBIR ACTIVIDADES Y COMPROMISOS
+        // =================================================================
 
         // Actualizar estado local
         informe.estado = 'sincronizado';
@@ -801,6 +872,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarNotificacion('⚠️ Trabajando sin conexión', 'warning');
     });
 });
+
 
 
 
