@@ -4,14 +4,30 @@
     box-sizing: border-box;
 }
 
+/* ============================================= */
+/* PALETA DE COLORES Y VARIABLES GLOBALES        */
+/* ============================================= */
+:root {
+    --ani-orange: #da723f;
+    --ani-dark-grey: #575756;
+    --primary-color: #004884; /* Azul institucional para la app principal */
+    --success: #28a745;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --border: #dee2e6;
+}
+
+/* ============================================= */
+/* ESTILOS DE LA APLICACIÓN PRINCIPAL            */
+/* ============================================= */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: #f5f5f5;
-    padding-bottom: 60px;
+    padding-bottom: 80px; /* Aumentado para que el menú no tape contenido */
 }
 
 .header {
-    background: #004884;
+    background: var(--primary-color);
     color: white;
     padding: 15px;
     position: sticky;
@@ -30,8 +46,8 @@ body {
     margin-right: 5px;
 }
 
-.online { background: #4CAF50; }
-.offline { background: #f44336; }
+.online { background: var(--success); }
+.offline { background: var(--danger); }
 
 .form-section {
     background: white;
@@ -74,17 +90,17 @@ textarea {
 }
 
 .btn-primary {
-    background: #004884;
+    background: var(--primary-color);
     color: white;
 }
 
 .btn-secondary {
-    background: #6c757d;
+    background: var(--ani-dark-grey);
     color: white;
 }
 
 .btn-success {
-    background: #28a745;
+    background: var(--success);
     color: white;
 }
 
@@ -108,10 +124,14 @@ textarea {
     color: #666;
     cursor: pointer;
     padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
 }
 
 .menu-btn.active {
-    color: #004884;
+    color: var(--primary-color);
     font-weight: bold;
 }
 
@@ -128,7 +148,7 @@ textarea {
     padding: 10px;
     margin: 10px 0;
     border-radius: 6px;
-    border-left: 3px solid #004884;
+    border-left: 3px solid var(--primary-color);
 }
 
 .sync-status {
@@ -138,12 +158,136 @@ textarea {
     margin: 10px;
     text-align: center;
     font-size: 14px;
-
 }
 
-/* ================================== */
-/* ESTILOS PARA EL MODAL DE EDICIÓN   */
-/* ================================== */
+/* ============================================= */
+/* ESTILOS PARA LA VISTA DE LOGIN (NUEVO)        */
+/* ============================================= */
+
+#auth-section {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: var(--ani-orange);
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 450px;
+}
+
+.login-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.login-card .header {
+    background: var(--ani-dark-grey);
+    color: white;
+    padding: 40px 30px;
+    text-align: center;
+}
+
+.login-card .logo {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-weight: bold;
+    color: var(--ani-orange);
+    font-size: 24px;
+    border: 2px solid var(--ani-orange);
+}
+
+.login-card .form-container {
+    padding: 40px 30px;
+}
+
+.login-card .form-group {
+    margin-bottom: 25px;
+}
+
+.login-card .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--ani-dark-grey);
+    font-size: 14px;
+}
+
+.login-card .form-group input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: #fafafa;
+}
+
+.login-card .form-group input:focus {
+    outline: none;
+    border-color: var(--ani-orange);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(218, 114, 63, 0.2);
+}
+
+.login-card .btn-primary {
+    background: linear-gradient(135deg, var(--ani-orange) 0%, #d46532 100%);
+    color: white;
+}
+
+.login-card .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(218, 114, 63, 0.3);
+}
+
+.login-card .message {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    text-align: center;
+    display: none;
+}
+
+.login-card .error-message {
+    background: var(--danger);
+    color: white;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================= */
+/* ESTILOS PARA EL MODAL DE EDICIÓN              */
+/* ============================================= */
 .modal-overlay {
     position: fixed;
     top: 0;
