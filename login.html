@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#004884">
     <title>ANI Campo - Iniciar Sesión</title>
+    <link rel="manifest" href="manifest.json">
     <style>
         * {
             margin: 0;
@@ -359,5 +360,13 @@
             window.APP_STATE.isOnline = isOnline;
         }
     </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/APP_Informes_Campo_ANI/sw.js')
+          .then(reg => console.log('✅ Service Worker registrado en login.html.'))
+          .catch(err => console.error('❌ Error al registrar Service Worker:', err));
+  }
+</script>
 </body>
+
 </html>
