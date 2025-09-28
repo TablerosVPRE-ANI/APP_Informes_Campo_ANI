@@ -3,7 +3,6 @@ const CACHE_NAME = 'ani-campo-v1';
 const urlsToCache = [
   '/APP_Informes_Campo_ANI/',
   '/APP_Informes_Campo_ANI/index.html',
-  '/APP_Informes_Campo_ANI/login.html',
   '/APP_Informes_Campo_ANI/admin-usuarios.html',
   '/APP_Informes_Campo_ANI/style.css',
   '/APP_Informes_Campo_ANI/app.js',
@@ -51,3 +50,4 @@ self.addEventListener('fetch', event => {
   );
 
 });
+
