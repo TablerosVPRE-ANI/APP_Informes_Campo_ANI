@@ -3,7 +3,7 @@
   "short_name": "ANI Campo",
   "description": "Sistema de Informes de Campo - Agencia Nacional de Infraestructura",
   "scope": "/APP_Informes_Campo_ANI/",
-  "start_url": "/APP_Informes_Campo_ANI/login.html",
+  "start_url": "/APP_Informes_Campo_ANI/index.html",
   "display": "standalone",
   "background_color": "#004884",
   "theme_color": "#004884",
@@ -24,6 +24,7 @@
     }
   ]
 }
+
 
 
 
