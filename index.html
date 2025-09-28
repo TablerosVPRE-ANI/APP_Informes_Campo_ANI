@@ -294,8 +294,15 @@
         </div>
     </div>
 </div>
+    // Agregar en index.html antes del </body>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/APP_Informes_Campo_ANI/sw.js')
+    .then(reg => console.log('Service Worker registrado'))
+    .catch(err => console.log('Error:', err));
+}
 </body>
 </html>
+
 
 
 
