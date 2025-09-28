@@ -9,7 +9,9 @@ const urlsToCache = [
   '/APP_Informes_Campo_ANI/app.js',
   '/APP_Informes_Campo_ANI/auth.js',
   '/APP_Informes_Campo_ANI/config.js',
-  '/APP_Informes_Campo_ANI/manifest.json'
+  '/APP_Informes_Campo_ANI/manifest.json',
+  '/APP_Informes_Campo_ANI/icons/icon-192.png',
+  '/APP_Informes_Campo_ANI/icons/icon-512.png'
 ];
 
 // Instalar el Service Worker
@@ -47,4 +49,5 @@ self.addEventListener('fetch', event => {
         return response || fetch(event.request);
       })
   );
+
 });
