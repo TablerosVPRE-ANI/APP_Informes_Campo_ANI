@@ -552,7 +552,8 @@
                                 <label for="role">Rol *</label>
                                 <select id="role" name="role" required>
                                     <option value="">-- Seleccionar Rol --</option>
-                                    <option value="funcionario">Funcionario</option>
+                                    <option value="funcionario">Funcionario-ANI</option>
+                                    <option value="contratista">Contratista-ANI</option>
                                     <option value="coordinador">Coordinador</option>
                                     <option value="admin">Administrador</option>
                                     <option value="superadmin">Super Administrador</option>
@@ -563,6 +564,7 @@
                                 <label for="git">GIT Asignado *</label>
                                 <select id="git" name="git" required onchange="updateGitDescription()">
                                     <option value="">-- Seleccionar GIT --</option>
+                                    <option value="VPRE">Vicepresidencia Planeacion, Riesgos y Entorno</option>
                                     <option value="Social">GIT Social</option>
                                     <option value="Predial">GIT Predial</option>
                                     <option value="Ambiental">GIT Ambiental</option>
@@ -738,6 +740,7 @@
         function updateGitDescription() {
             const git = document.getElementById('git').value;
             const descriptions = {
+                'VPRE': 'VICEPRESIDENCIA',
                 'Social': 'GIT Social - Gestión Social',
                 'Predial': 'GIT Predial - Gestión de Predios',
                 'Ambiental': 'GIT Ambiental - Gestión Ambiental',
@@ -1062,3 +1065,4 @@ Pedro Sánchez Ruiz,pedro.sanchez@ani.gov.co,PSanchez2025*,coordinador,Riesgos`;
 </body>
 
 </html>
+
