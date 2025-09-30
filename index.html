@@ -87,9 +87,9 @@
                         </div>
                     </div>
                 </div>
-                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Nombre del Proyecto / Corredor Vial *</label>
+                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Nombre del Proyecto / Corredor Vial/ Evento *</label>
                 <input type="text" id="nombreProyecto" placeholder="Ej: Canal del Dique, Corredor Santana-Mocoa-Neiva" required>
-                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Nombre del funcionario *</label>
+                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Nombre del Funcionario - Contratista-ANI *</label>
                 <input type="text" id="nombreFuncionario" placeholder="Nombre completo" required>
                 <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Lugar específico *</label>
                 <input type="text" id="lugar" placeholder="Lugar específico en Cartagena" value="Cartagena" required>
@@ -106,7 +106,7 @@
         <div id="actividades" class="section">
             <div class="form-section">
                 <div class="form-title">📝 Registrar Actividad</div>
-                <input type="text" id="actividadTitulo" placeholder="Título de la actividad">
+                <input type="text" id="actividadTitulo" placeholder="Título de la actividad o Tema">
                 <input type="datetime-local" id="actividadFecha">
                 <textarea id="actividadDescripcion" placeholder="Descripción detallada"></textarea>
                 <div style="margin: 10px 0;">
@@ -127,6 +127,8 @@
                     <option value="ANI">ANI</option>
                     <option value="Concesionario">Concesionario</option>
                     <option value="Interventoría">Interventoría</option>
+                    <option value="Entidad">Entidad</option>
+                    <option value="Ministerio">Ministerio</option>
                 </select>
                 <input type="date" id="compromisoFecha">
                 <select id="compromisoPrioridad">
@@ -310,6 +312,7 @@
     </script>
 </body>
 </html>
+
 
 
 
