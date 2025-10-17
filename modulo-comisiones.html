@@ -114,9 +114,9 @@
             const comisionData = {
                 codigo_comision: generarCodigo(),
                 solicitante_id: currentUser.id,
-                solicitante_nombre: currentUser.name,
+                nombre_solicitante: currentUser.name,
                 cargo: currentUser.cargo || 'Contratista',
-                git: currentUser.git,
+                git_solicitante: currentUser.git,
                 proyecto: document.getElementById('proyecto').value,
                 municipio: document.getElementById('municipio').value,
                 objeto_visita: document.getElementById('objetoVisita').value,
