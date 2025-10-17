@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>ANI-Go Hub - Sistema Modular</title>
+    <style>
+        .hub-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            padding: 20px;
+        }
+        
+        .hub-header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .module-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 3px solid transparent;
+        }
+        
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            border-color: #da723f;
+        }
+        
+        .module-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .module-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #004884;
+            margin-bottom: 10px;
+        }
+        
+        .module-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .module-badge {
+            background: #da723f;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 15px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="hub-container">
+        <!-- Header con info del usuario -->
+        <div class="hub-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <img src="icons/icon-512.png" alt="ANI" style="width: 60px; height: 60px;">
+                    <div>
+                        <h1 style="color: #004884; margin: 0;">ANI-Go Hub</h1>
+                        <p style="color: #666; margin: 5px 0;">Sistema Modular de Gestión</p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="color: #004884; font-weight: bold;" id="userName">LEON ALEJANDRO ORTEGA</div>
+                    <div style="color: #666; font-size: 14px;" id="userGit">GIT: SuperAdmin</div>
+                    <button onclick="logout()" style="margin-top: 10px; background: #575756; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de módulos -->
+        <div class="modules-grid">
+            <!-- Módulo 1: Programación de Comisiones -->
+            <div class="module-card" onclick="abrirModulo('comisiones')" id="modComisiones">
+                <div class="module-icon">📅</div>
+                <div class="module-title">Programación de Comisiones</div>
+                <div class="module-description">
+                    Programe y gestione las comisiones de su GIT. 
+                    Genere códigos únicos y haga seguimiento del estado.
+                </div>
+                <div class="module-badge">Solo Gerentes GIT</div>
+            </div>
+
+            <!-- Módulo 2: Informes de Comisión -->
+            <div class="module-card" onclick="abrirModulo('informes')">
+                <div class="module-icon">📝</div>
+                <div class="module-title">Informes de Comisión</div>
+                <div class="module-description">
+                    Registre actividades, compromisos y evidencias 
+                    de sus comisiones en campo.
+                </div>
+                <div class="module-badge">Todos los usuarios</div>
+            </div>
+
+            <!-- Módulo 3: Dashboard (Futuro) -->
+            <div class="module-card" onclick="abrirModulo('dashboard')" style="opacity: 0.5; cursor: not-allowed;">
+                <div class="module-icon">📊</div>
+                <div class="module-title">Dashboard Ejecutivo</div>
+                <div class="module-description">
+                    Visualice estadísticas y métricas consolidadas 
+                    de todas las comisiones.
+                </div>
+                <div class="module-badge">Próximamente</div>
+            </div>
+
+            <!-- Módulo 4: Administración -->
+            <div class="module-card" onclick="abrirModulo('admin')" id="modAdmin" style="display: none;">
+                <div class="module-icon">⚙️</div>
+                <div class="module-title">Administración</div>
+                <div class="module-description">
+                    Gestione usuarios, permisos y configuraciones 
+                    del sistema.
+                </div>
+                <div class="module-badge">Super Admin</div>
+            </div>
+
+            <!-- Módulo 5: Reportes (Futuro) -->
+            <div class="module-card" onclick="abrirModulo('reportes')" style="opacity: 0.5; cursor: not-allowed;">
+                <div class="module-icon">📈</div>
+                <div class="module-title">Reportes y Análisis</div>
+                <div class="module-description">
+                    Genere reportes personalizados y exporte 
+                    información consolidada.
+                </div>
+                <div class="module-badge">Próximamente</div>
+            </div>
+
+            <!-- Módulo 6: Sincronización -->
+            <div class="module-card" onclick="abrirModulo('sync')">
+                <div class="module-icon">🔄</div>
+                <div class="module-title">Sincronización</div>
+                <div class="module-description">
+                    Sincronice datos locales con el servidor 
+                    y gestione respaldos.
+                </div>
+                <div class="module-badge">Disponible</div>
+            </div>
+        </div>
+
+        <!-- Footer informativo -->
+        <div style="text-align: center; margin-top: 50px; color: #666;">
+            <p>Agencia Nacional de Infraestructura - VPRE © 2025</p>
+            <p style="font-size: 12px;">Versión 2.0 - Sistema Modular</p>
+        </div>
+    </div>
+
+    <script>
+        // Verificar permisos al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = JSON.parse(localStorage.getItem('ani_current_user') || '{}');
+            
+            // Mostrar/ocultar módulos según rol
+            if (user.role === 'superadmin') {
+                document.getElementById('modAdmin').style.display = 'block';
+            }
+            
+            // Solo gerentes ven comisiones
+            const rolesGerente = ['coordinador', 'admin', 'superadmin'];
+            if (!rolesGerente.includes(user.role)) {
+                document.getElementById('modComisiones').style.opacity = '0.5';
+                document.getElementById('modComisiones').style.cursor = 'not-allowed';
+                document.getElementById('modComisiones').onclick = null;
+            }
+            
+            // Actualizar info usuario
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userGit').textContent = `GIT: ${user.git}`;
+        });
+
+        function abrirModulo(modulo) {
+            switch(modulo) {
+                case 'comisiones':
+                    window.location.href = 'modulo-comisiones.html';
+                    break;
+                case 'informes':
+                    window.location.href = 'modulo-informes.html';
+                    break;
+                case 'admin':
+                    window.location.href = 'admin-usuarios.html';
+                    break;
+                case 'sync':
+                    sincronizarDatos();
+                    break;
+                default:
+                    alert('Módulo en desarrollo');
+            }
+        }
+
+        function sincronizarDatos() {
+            alert('Sincronización iniciada...');
+            // Lógica de sincronización
+        }
+
+        function logout() {
+            if (confirm('¿Desea cerrar sesión?')) {
+                localStorage.removeItem('ani_session');
+                localStorage.removeItem('ani_current_user');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>
