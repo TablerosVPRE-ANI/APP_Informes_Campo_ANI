@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Solicitud de Comisión - ANI-Go</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header" style="background: linear-gradient(135deg, #004884 0%, #0066cc 100%); padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; color: white;">
+            <div>
+                <h1>📋 Solicitud de Comisión</h1>
+                <p id="userInfo"></p>
+            </div>
+            <button onclick="volverAlHub()" style="background: white; color: #004884; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                ← Volver al Hub
+            </button>
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 1200px; margin: 20px auto; padding: 0 20px;">
+        
+        <!-- Formulario de solicitud -->
+        <div class="card" style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #004884; margin-bottom: 20px;">Nueva Solicitud de Comisión</h2>
+            
+            <form id="formComision">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    
+                    <div class="form-group">
+                        <label>Proyecto/Corredor *</label>
+                        <input type="text" id="proyecto" required placeholder="Nombre del proyecto">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Municipio/Ciudad *</label>
+                        <input type="text" id="municipio" required placeholder="Destino de la comisión">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Fecha Inicio *</label>
+                        <input type="date" id="fechaInicio" required onchange="calcularDias()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Fecha Fin *</label>
+                        <input type="date" id="fechaFin" required onchange="calcularDias()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Días de Comisión</label>
+                        <input type="number" id="diasComision" readonly style="background: #f5f5f5;">
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Objeto de la Visita *</label>
+                        <textarea id="objetoVisita" required rows="3" placeholder="Describa el propósito específico de la comisión"></textarea>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Actividades a Realizar *</label>
+                        <textarea id="actividades" required rows="4" placeholder="Detalle las actividades programadas"></textarea>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Observaciones</label>
+                        <textarea id="observaciones" rows="2" placeholder="Información adicional (opcional)"></textarea>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" style="background: #004884;">
+                        📤 Enviar Solicitud
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="limpiarFormulario()">
+                        🔄 Limpiar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Mis solicitudes -->
+        <div class="card" style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #004884; margin-bottom: 20px;">Mis Solicitudes</h2>
+            
+            <div id="tablaSolicitudes">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            currentUser = JSON.parse(localStorage.getItem('ani_current_user') || '{}');
+            
+            if (!currentUser.email) {
+                alert('Debe iniciar sesión');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            document.getElementById('userInfo').textContent = `${currentUser.name} - ${currentUser.git}`;
+            cargarMisSolicitudes();
+        });
+
+        document.getElementById('formComision').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const comisionData = {
+                codigo_comision: generarCodigo(),
+                solicitante_id: currentUser.id,
+                solicitante_nombre: currentUser.name,
+                cargo: currentUser.cargo || 'Contratista',
+                git: currentUser.git,
+                proyecto: document.getElementById('proyecto').value,
+                municipio: document.getElementById('municipio').value,
+                objeto_visita: document.getElementById('objetoVisita').value,
+                actividades_programadas: document.getElementById('actividades').value,
+                fecha_inicio: document.getElementById('fechaInicio').value,
+                fecha_fin: document.getElementById('fechaFin').value,
+                dias_comision: document.getElementById('diasComision').value,
+                observaciones: document.getElementById('observaciones').value,
+                estado: 'pendiente_supervisor'
+            };
+            
+            try {
+                // Guardar en Supabase
+                if (window.supabase) {
+                    const { data, error } = await supabase
+                        .from('comisiones_flujo')
+                        .insert([comisionData]);
+                    
+                    if (error) throw error;
+                }
+                
+                // Guardar localmente también
+                let solicitudes = JSON.parse(localStorage.getItem('mis_solicitudes') || '[]');
+                solicitudes.push(comisionData);
+                localStorage.setItem('mis_solicitudes', JSON.stringify(solicitudes));
+                
+                alert(`✅ Solicitud enviada exitosamente\nCódigo: ${comisionData.codigo_comision}\n\nSu supervisor será notificado.`);
+                limpiarFormulario();
+                cargarMisSolicitudes();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al enviar solicitud. Se guardó localmente.');
+            }
+        });
+
+        function generarCodigo() {
+            const fecha = new Date();
+            const año = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            return `COM-${año}${mes}-${currentUser.git}-${random}`;
+        }
+
+        function calcularDias() {
+            const inicio = new Date(document.getElementById('fechaInicio').value);
+            const fin = new Date(document.getElementById('fechaFin').value);
+            
+            if (inicio && fin && fin >= inicio) {
+                const dias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+                document.getElementById('diasComision').value = dias;
+            }
+        }
+
+        async function cargarMisSolicitudes() {
+            const tabla = document.getElementById('tablaSolicitudes');
+            
+            try {
+                let solicitudes = [];
+                
+                // Intentar cargar desde Supabase
+                if (window.supabase) {
+                    const { data, error } = await supabase
+                        .from('comisiones_flujo')
+                        .select('*')
+                        .eq('solicitante_id', currentUser.id)
+                        .order('created_at', { ascending: false });
+                    
+                    if (!error) solicitudes = data || [];
+                }
+                
+                // Si no hay datos, cargar local
+                if (solicitudes.length === 0) {
+                    solicitudes = JSON.parse(localStorage.getItem('mis_solicitudes') || '[]');
+                }
+                
+                if (solicitudes.length > 0) {
+                    let html = `
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f5f5f5;">
+                                    <th style="padding: 12px; text-align: left;">Código</th>
+                                    <th style="padding: 12px;">Proyecto</th>
+                                    <th style="padding: 12px;">Fechas</th>
+                                    <th style="padding: 12px;">Estado</th>
+                                    <th style="padding: 12px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    solicitudes.forEach(sol => {
+                        const estadoColor = getEstadoColor(sol.estado);
+                        html += `
+                            <tr style="border-bottom: 1px solid #e0e0e0;">
+                                <td style="padding: 12px; font-weight: bold; font-size: 12px;">${sol.codigo_comision}</td>
+                                <td style="padding: 12px;">${sol.proyecto}</td>
+                                <td style="padding: 12px; font-size: 13px;">${sol.fecha_inicio} al ${sol.fecha_fin}</td>
+                                <td style="padding: 12px;">
+                                    <span style="background: ${estadoColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">
+                                        ${formatEstado(sol.estado)}
+                                    </span>
+                                </td>
+                                <td style="padding: 12px;">
+                                    <button onclick="verDetalle('${sol.codigo_comision}')" style="background: #004884; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+                                        👁️ Ver
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table>';
+                    tabla.innerHTML = html;
+                } else {
+                    tabla.innerHTML = '<p style="text-align: center; color: #666;">No hay solicitudes registradas</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                tabla.innerHTML = '<p style="color: red;">Error al cargar solicitudes</p>';
+            }
+        }
+
+        function getEstadoColor(estado) {
+            const colores = {
+                'pendiente_supervisor': '#ff9800',
+                'aprobado_supervisor': '#2196F3',
+                'rechazado_supervisor': '#f44336',
+                'pendiente_validacion': '#9C27B0',
+                'aprobado_final': '#4CAF50',
+                'rechazado_final': '#f44336'
+            };
+            return colores[estado] || '#666';
+        }
+
+        function formatEstado(estado) {
+            const estados = {
+                'pendiente_supervisor': 'Pendiente Supervisor',
+                'aprobado_supervisor': 'Aprobado por Supervisor',
+                'rechazado_supervisor': 'Rechazado por Supervisor',
+                'pendiente_validacion': 'En Validación Final',
+                'aprobado_final': 'Aprobado',
+                'rechazado_final': 'Rechazado'
+            };
+            return estados[estado] || estado;
+        }
+
+        function verDetalle(codigo) {
+            // Implementar vista de detalle
+            alert(`Ver detalles de: ${codigo}`);
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('formComision').reset();
+            document.getElementById('diasComision').value = '';
+        }
+
+        function volverAlHub() {
+            window.location.href = 'hub.html';
+        }
+    </script>
+</body>
+</html>
