@@ -103,7 +103,7 @@
                     Programe y gestione las comisiones de su GIT. 
                     Genere códigos únicos y haga seguimiento del estado.
                 </div>
-                <div class="module-badge">Solo Gerentes GIT</div>
+                <div class="module-badge">Gerentes GIT, Funcionarios y Contratistas</div>
             </div>
 
             <!-- Módulo 2: Informes de Comisión -->
@@ -195,7 +195,7 @@ if (['coordinador', 'admin', 'superadmin'].includes(user.role) || user.email ===
 }
             
             // Solo gerentes ven comisiones
-            const rolesGerente = ['coordinador', 'admin', 'superadmin'];
+            const rolesGerente = ['coordinador', 'admin', 'superadmin', 'contratista', 'funcionario'];
             if (!rolesGerente.includes(user.role)) {
                 document.getElementById('modComisiones').style.opacity = '0.5';
                 document.getElementById('modComisiones').style.cursor = 'not-allowed';
@@ -245,3 +245,4 @@ if (['coordinador', 'admin', 'superadmin'].includes(user.role) || user.email ===
 </body>
 
 </html>
+
