@@ -313,7 +313,9 @@
             try {
                 const result = await window.authSystem.login(email, password);
                 if (result.success) {
-                    setTimeout(() => location.reload(), 1500);
+                    setTimeout(() => {
+                    window.location.href = 'hub.html';
+                }, 1500);
                 } else {
                     showError(result.error || 'Error al iniciar sesión');
                 }
@@ -570,6 +572,7 @@ function limpiarFormularioComision() {
     </script>
 </body>
 </html>
+
 
 
 
