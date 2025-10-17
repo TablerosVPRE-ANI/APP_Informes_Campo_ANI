@@ -7,6 +7,18 @@ const SUPABASE_CONFIG = {
 // Inicializar cliente de Supabase
 let supabase;
 
+    document.addEventListener('DOMContentLoaded', async function() {
+        currentUser = JSON.parse(localStorage.getItem('ani_current_user') || '{}');
+        if (!currentUser.email) {
+            alert('Debe iniciar sesión');
+            window.location.href = 'index.html';
+            return;
+        }
+
+        document.getElementById('userInfo').textContent = `${currentUser.name} - ${currentUser.git}`;
+        cargarMisSolicitudes();
+    });
+
 // Función para inicializar Supabase
 function initSupabase() {
     try {
@@ -61,4 +73,5 @@ window.addEventListener('offline', () => {
 // 2. Settings → API
 // 3. Copia la URL del proyecto
 // 4. Copia la clave "anon public"
+
 // 5. Reemplaza los valores arriba
