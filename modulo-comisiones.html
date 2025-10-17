@@ -27,42 +27,34 @@
             
             <form id="formComision">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                    
                     <div class="form-group">
                         <label>Proyecto/Corredor *</label>
                         <input type="text" id="proyecto" required placeholder="Nombre del proyecto">
                     </div>
-                    
                     <div class="form-group">
                         <label>Municipio/Ciudad *</label>
                         <input type="text" id="municipio" required placeholder="Destino de la comisión">
                     </div>
-                    
                     <div class="form-group">
                         <label>Fecha Inicio *</label>
                         <input type="date" id="fechaInicio" required onchange="calcularDias()">
                     </div>
-                    
                     <div class="form-group">
                         <label>Fecha Fin *</label>
                         <input type="date" id="fechaFin" required onchange="calcularDias()">
                     </div>
-                    
                     <div class="form-group">
                         <label>Días de Comisión</label>
                         <input type="number" id="diasComision" readonly style="background: #f5f5f5;">
                     </div>
-                    
                     <div class="form-group" style="grid-column: span 2;">
                         <label>Objeto de la Visita *</label>
                         <textarea id="objetoVisita" required rows="3" placeholder="Describa el propósito específico de la comisión"></textarea>
                     </div>
-                    
                     <div class="form-group" style="grid-column: span 2;">
                         <label>Actividades a Realizar *</label>
                         <textarea id="actividades" required rows="4" placeholder="Detalle las actividades programadas"></textarea>
                     </div>
-                    
                     <div class="form-group" style="grid-column: span 2;">
                         <label>Observaciones</label>
                         <textarea id="observaciones" rows="2" placeholder="Información adicional (opcional)"></textarea>
@@ -83,10 +75,7 @@
         <!-- Mis solicitudes -->
         <div class="card" style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
             <h2 style="color: #004884; margin-bottom: 20px;">Mis Solicitudes</h2>
-            
-            <div id="tablaSolicitudes">
-                <!-- Se llena dinámicamente -->
-            </div>
+            <div id="tablaSolicitudes"></div>
         </div>
     </div>
 
@@ -96,21 +85,27 @@
         let currentUser = null;
 
         document.addEventListener('DOMContentLoaded', async function() {
+            // Asegurarse de que Supabase esté inicializado
+            if (!supabase) {
+                console.warn("⚠️ Supabase aún no está listo, intentando inicializar...");
+                await initSupabase();
+            }
+
+            // Cargar usuario
             currentUser = JSON.parse(localStorage.getItem('ani_current_user') || '{}');
-            
             if (!currentUser.email) {
                 alert('Debe iniciar sesión');
                 window.location.href = 'index.html';
                 return;
             }
-            
+
             document.getElementById('userInfo').textContent = `${currentUser.name} - ${currentUser.git}`;
             cargarMisSolicitudes();
         });
 
         document.getElementById('formComision').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const comisionData = {
                 codigo_comision: generarCodigo(),
                 solicitante_id: currentUser.id,
@@ -127,29 +122,23 @@
                 observaciones: document.getElementById('observaciones').value,
                 estado: 'pendiente_supervisor'
             };
-            
+
             try {
-                // Guardar en Supabase
-                if (window.supabase) {
-                    const { data, error } = await supabase
-                        .from('comisiones_flujo')
-                        .insert([comisionData]);
-                    
+                if (window.APP_STATE.supabaseConnected && supabase) {
+                    const { error } = await supabase.from('comisiones_flujo').insert([comisionData]);
                     if (error) throw error;
                 }
-                
-                // Guardar localmente también
+
                 let solicitudes = JSON.parse(localStorage.getItem('mis_solicitudes') || '[]');
                 solicitudes.push(comisionData);
                 localStorage.setItem('mis_solicitudes', JSON.stringify(solicitudes));
-                
-                alert(`✅ Solicitud enviada exitosamente\nCódigo: ${comisionData.codigo_comision}\n\nSu supervisor será notificado.`);
+
+                alert(`✅ Solicitud enviada exitosamente\nCódigo: ${comisionData.codigo_comision}`);
                 limpiarFormulario();
                 cargarMisSolicitudes();
-                
             } catch (error) {
-                console.error('Error:', error);
-                alert('Error al enviar solicitud. Se guardó localmente.');
+                console.error('Error al enviar solicitud:', error);
+                alert('⚠️ Error al enviar solicitud. Se guardó localmente.');
             }
         });
 
@@ -164,7 +153,6 @@
         function calcularDias() {
             const inicio = new Date(document.getElementById('fechaInicio').value);
             const fin = new Date(document.getElementById('fechaFin').value);
-            
             if (inicio && fin && fin >= inicio) {
                 const dias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
                 document.getElementById('diasComision').value = dias;
@@ -173,100 +161,69 @@
 
         async function cargarMisSolicitudes() {
             const tabla = document.getElementById('tablaSolicitudes');
-            
             try {
                 let solicitudes = [];
-                
-                // Intentar cargar desde Supabase
-                if (window.supabase) {
+
+                if (window.APP_STATE.supabaseConnected && supabase) {
                     const { data, error } = await supabase
                         .from('comisiones_flujo')
                         .select('*')
                         .eq('solicitante_id', currentUser.id)
                         .order('created_at', { ascending: false });
-                    
                     if (!error) solicitudes = data || [];
                 }
-                
-                // Si no hay datos, cargar local
-                if (solicitudes.length === 0) {
+
+                if (solicitudes.length === 0)
                     solicitudes = JSON.parse(localStorage.getItem('mis_solicitudes') || '[]');
-                }
-                
+
                 if (solicitudes.length > 0) {
                     let html = `
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="background: #f5f5f5;">
-                                    <th style="padding: 12px; text-align: left;">Código</th>
-                                    <th style="padding: 12px;">Proyecto</th>
-                                    <th style="padding: 12px;">Fechas</th>
-                                    <th style="padding: 12px;">Estado</th>
-                                    <th style="padding: 12px;">Acciones</th>
+                                    <th>Código</th>
+                                    <th>Proyecto</th>
+                                    <th>Fechas</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                     `;
-                    
                     solicitudes.forEach(sol => {
-                        const estadoColor = getEstadoColor(sol.estado);
                         html += `
-                            <tr style="border-bottom: 1px solid #e0e0e0;">
-                                <td style="padding: 12px; font-weight: bold; font-size: 12px;">${sol.codigo_comision}</td>
-                                <td style="padding: 12px;">${sol.proyecto}</td>
-                                <td style="padding: 12px; font-size: 13px;">${sol.fecha_inicio} al ${sol.fecha_fin}</td>
-                                <td style="padding: 12px;">
-                                    <span style="background: ${estadoColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">
-                                        ${formatEstado(sol.estado)}
-                                    </span>
-                                </td>
-                                <td style="padding: 12px;">
-                                    <button onclick="verDetalle('${sol.codigo_comision}')" style="background: #004884; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
-                                        👁️ Ver
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
+                            <tr>
+                                <td>${sol.codigo_comision}</td>
+                                <td>${sol.proyecto}</td>
+                                <td>${sol.fecha_inicio} al ${sol.fecha_fin}</td>
+                                <td>${formatEstado(sol.estado)}</td>
+                                <td><button onclick="verDetalle('${sol.codigo_comision}')">👁️ Ver</button></td>
+                            </tr>`;
                     });
-                    
-                    html += '</tbody></table>';
+                    html += "</tbody></table>";
                     tabla.innerHTML = html;
                 } else {
-                    tabla.innerHTML = '<p style="text-align: center; color: #666;">No hay solicitudes registradas</p>';
+                    tabla.innerHTML = '<p style="text-align:center;color:#666;">No hay solicitudes registradas</p>';
                 }
-                
             } catch (error) {
-                console.error('Error:', error);
-                tabla.innerHTML = '<p style="color: red;">Error al cargar solicitudes</p>';
+                console.error('Error al cargar solicitudes:', error);
+                tabla.innerHTML = '<p style="color:red;">Error al cargar solicitudes</p>';
             }
-        }
-
-        function getEstadoColor(estado) {
-            const colores = {
-                'pendiente_supervisor': '#ff9800',
-                'aprobado_supervisor': '#2196F3',
-                'rechazado_supervisor': '#f44336',
-                'pendiente_validacion': '#9C27B0',
-                'aprobado_final': '#4CAF50',
-                'rechazado_final': '#f44336'
-            };
-            return colores[estado] || '#666';
         }
 
         function formatEstado(estado) {
             const estados = {
-                'pendiente_supervisor': 'Pendiente Supervisor',
-                'aprobado_supervisor': 'Aprobado por Supervisor',
-                'rechazado_supervisor': 'Rechazado por Supervisor',
-                'pendiente_validacion': 'En Validación Final',
-                'aprobado_final': 'Aprobado',
-                'rechazado_final': 'Rechazado'
+                pendiente_supervisor: 'Pendiente Supervisor',
+                aprobado_supervisor: 'Aprobado por Supervisor',
+                rechazado_supervisor: 'Rechazado por Supervisor',
+                pendiente_validacion: 'En Validación Final',
+                aprobado_final: 'Aprobado',
+                rechazado_final: 'Rechazado'
             };
             return estados[estado] || estado;
         }
 
         function verDetalle(codigo) {
-            // Implementar vista de detalle
             alert(`Ver detalles de: ${codigo}`);
         }
 
