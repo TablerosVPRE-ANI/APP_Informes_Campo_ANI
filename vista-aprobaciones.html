@@ -1,64 +1,530 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <title>ANI-Go Hub</title>
+    <title>Aprobación de Comisiones - ANI-Go</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .tabs-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 15px;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.3s;
+        }
+        .tab-btn.active {
+            color: #004884;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #004884;
+        }
+        .badge-count {
+            background: #ff4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .detalle-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .acciones-aprobacion {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <div style="min-height: 100vh; background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); padding: 20px;">
-        <div style="background: white; border-radius: 15px; padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h1 style="color: #004884;">ANI-Go Hub</h1>
-            <p id="userInfo"></p>
+    <div class="header" style="background: linear-gradient(135deg, #004884 0%, #0066cc 100%); padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; color: white;">
+            <div>
+                <h1>✅ Aprobación de Comisiones</h1>
+                <p id="userInfo"></p>
+            </div>
+            <button onclick="volverAlHub()" style="background: white; color: #004884; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                ← Volver al Hub
+            </button>
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 1200px; margin: 20px auto; padding: 0 20px;">
+        
+        <!-- Tabs para diferentes vistas según rol -->
+        <div class="tabs-container" id="tabsContainer">
+            <!-- Se llenan dinámicamente según el rol -->
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-            <!-- Módulo Comisiones -->
-            <div onclick="abrirModulo('comisiones')" style="background: white; padding: 30px; border-radius: 12px; cursor: pointer; text-align: center;">
-                <div style="font-size: 60px;">📅</div>
-                <h3>Solicitar Comisión</h3>
-                <p>Solicite una nueva comisión</p>
+        <!-- Vista para Supervisores GIT -->
+        <div id="vistaSupervisor" class="vista-contenido" style="display: none;">
+            <div class="card" style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h2 style="color: #004884;">Solicitudes Pendientes de mi GIT</h2>
+                <div id="solicitudesPendientesGIT"></div>
             </div>
+        </div>
 
-            <!-- Módulo Aprobaciones (solo supervisores) -->
-            <div id="modAprobaciones" onclick="abrirModulo('aprobaciones')" style="background: white; padding: 30px; border-radius: 12px; cursor: pointer; text-align: center; display: none;">
-                <div style="font-size: 60px;">✅</div>
-                <h3>Aprobar Comisiones</h3>
-                <p>Gestione aprobaciones</p>
+        <!-- Vista para Johanna (Validación Final) -->
+        <div id="vistaValidador" class="vista-contenido" style="display: none;">
+            <div class="card" style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h2 style="color: #004884;">Solicitudes para Validación Final</h2>
+                <div id="solicitudesValidacion"></div>
             </div>
+            
+            <!-- Dashboard resumen para Johanna -->
+            <div class="card" style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h2 style="color: #004884;">Resumen por GIT</h2>
+                <div id="resumenGIT"></div>
+            </div>
+        </div>
 
-            <!-- Módulo Informes -->
-            <div onclick="abrirModulo('informes')" style="background: white; padding: 30px; border-radius: 12px; cursor: pointer; text-align: center;">
-                <div style="font-size: 60px;">📝</div>
-                <h3>Informes de Comisión</h3>
-                <p>Registre actividades</p>
+        <!-- Vista del historial -->
+        <div id="vistaHistorial" class="vista-contenido" style="display: none;">
+            <div class="card" style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h2 style="color: #004884;">Historial de Aprobaciones</h2>
+                <div id="historialAprobaciones"></div>
             </div>
         </div>
     </div>
 
+    <!-- Modal para ver detalles y aprobar/rechazar -->
+    <div id="modalDetalle" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="background: white; max-width: 800px; margin: 50px auto; padding: 30px; border-radius: 12px; max-height: 80vh; overflow-y: auto;">
+            <h2 style="color: #004884;">Detalles de la Comisión</h2>
+            <div id="detalleContenido"></div>
+            
+            <div class="acciones-aprobacion">
+                <textarea id="comentarioAprobacion" placeholder="Comentarios (opcional)" style="width: 100%; min-height: 80px; margin-bottom: 10px;"></textarea>
+                <button onclick="aprobarComision()" style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer;">
+                    ✅ Aprobar
+                </button>
+                <button onclick="rechazarComision()" style="background: #f44336; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer;">
+                    ❌ Rechazar
+                </button>
+                <button onclick="cerrarModal()" style="background: #666; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer;">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
     <script>
-        const user = JSON.parse(localStorage.getItem('ani_current_user') || '{}');
-        
-        // Mostrar módulo de aprobaciones solo para supervisores
-        if (['coordinador', 'admin', 'superadmin'].includes(user.role) || user.email === 'jvelez@ani.gov.co') {
-            document.getElementById('modAprobaciones').style.display = 'block';
-        }
-        
-        document.getElementById('userInfo').textContent = `${user.name} - ${user.git}`;
-        
-        function abrirModulo(modulo) {
-            switch(modulo) {
-                case 'comisiones':
-                    window.location.href = 'modulo-comisiones.html';
-                    break;
-                case 'aprobaciones':
-                    window.location.href = 'vista-aprobaciones.html';
-                    break;
-                case 'informes':
-                    window.location.href = 'index.html';
-                    break;
+        let currentUser = null;
+        let comisionSeleccionada = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            currentUser = JSON.parse(localStorage.getItem('ani_current_user') || '{}');
+            
+            if (!currentUser.email) {
+                alert('Debe iniciar sesión');
+                window.location.href = 'index.html';
+                return;
             }
+            
+            document.getElementById('userInfo').textContent = `${currentUser.name} - ${currentUser.git}`;
+            configurarVistas();
+            cargarDatos();
+        });
+
+        function configurarVistas() {
+            const tabsContainer = document.getElementById('tabsContainer');
+            let tabs = '';
+            
+            // Supervisores ven solicitudes de su GIT
+            if (['coordinador', 'admin'].includes(currentUser.role)) {
+                tabs += `<button class="tab-btn active" onclick="cambiarTab('supervisor')">
+                    Pendientes de Aprobación <span class="badge-count" id="countPendientes">0</span>
+                </button>`;
+                document.getElementById('vistaSupervisor').style.display = 'block';
+            }
+            
+            // Johanna ve todas las solicitudes
+            if (currentUser.email === 'jvelez@ani.gov.co' || currentUser.role === 'superadmin') {
+                tabs += `<button class="tab-btn ${tabs === '' ? 'active' : ''}" onclick="cambiarTab('validador')">
+                    Validación Final <span class="badge-count" id="countValidacion">0</span>
+                </button>`;
+                tabs += `<button class="tab-btn" onclick="cambiarTab('historial')">Historial</button>`;
+                
+                if (tabs.includes('active')) {
+                    document.getElementById('vistaValidador').style.display = 'block';
+                }
+            }
+            
+            tabsContainer.innerHTML = tabs;
+        }
+
+        async function cargarDatos() {
+            try {
+                if (['coordinador', 'admin'].includes(currentUser.role)) {
+                    await cargarSolicitudesPendientesGIT();
+                }
+                
+                if (currentUser.email === 'jvelez@ani.gov.co' || currentUser.role === 'superadmin') {
+                    await cargarSolicitudesValidacion();
+                    await cargarResumenGIT();
+                }
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+            }
+        }
+
+        async function cargarSolicitudesPendientesGIT() {
+            const contenedor = document.getElementById('solicitudesPendientesGIT');
+            
+            try {
+                let solicitudes = [];
+                
+                if (window.supabase) {
+                    const { data, error } = await supabase
+                        .from('comisiones_flujo')
+                        .select('*')
+                        .eq('git', currentUser.git)
+                        .eq('estado', 'pendiente_supervisor')
+                        .order('created_at', { ascending: false });
+                    
+                    if (!error) solicitudes = data || [];
+                }
+                
+                // Actualizar contador
+                document.getElementById('countPendientes').textContent = solicitudes.length;
+                
+                if (solicitudes.length > 0) {
+                    let html = '<div style="display: grid; gap: 15px;">';
+                    
+                    solicitudes.forEach(sol => {
+                        html += `
+                            <div class="detalle-card">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <div>
+                                        <h3 style="color: #004884; margin: 0 0 10px 0;">${sol.proyecto}</h3>
+                                        <p><strong>Código:</strong> ${sol.codigo_comision}</p>
+                                        <p><strong>Solicitante:</strong> ${sol.solicitante_nombre}</p>
+                                        <p><strong>Fechas:</strong> ${sol.fecha_inicio} al ${sol.fecha_fin} (${sol.dias_comision} días)</p>
+                                        <p><strong>Municipio:</strong> ${sol.municipio}</p>
+                                    </div>
+                                    <button onclick="verDetalle('${sol.codigo_comision}')" 
+                                            style="background: #004884; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                                        Ver Detalle
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    contenedor.innerHTML = html;
+                } else {
+                    contenedor.innerHTML = '<p style="text-align: center; color: #666;">No hay solicitudes pendientes</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                contenedor.innerHTML = '<p style="color: red;">Error al cargar solicitudes</p>';
+            }
+        }
+
+        async function cargarSolicitudesValidacion() {
+            const contenedor = document.getElementById('solicitudesValidacion');
+            
+            try {
+                let solicitudes = [];
+                
+                if (window.supabase) {
+                    const { data, error } = await supabase
+                        .from('comisiones_flujo')
+                        .select('*')
+                        .eq('estado', 'pendiente_validacion')
+                        .order('created_at', { ascending: false });
+                    
+                    if (!error) solicitudes = data || [];
+                }
+                
+                document.getElementById('countValidacion').textContent = solicitudes.length;
+                
+                if (solicitudes.length > 0) {
+                    let html = '<div style="display: grid; gap: 15px;">';
+                    
+                    solicitudes.forEach(sol => {
+                        html += `
+                            <div class="detalle-card">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <div>
+                                        <h3 style="color: #004884; margin: 0 0 10px 0;">${sol.proyecto}</h3>
+                                        <p><strong>GIT:</strong> ${sol.git}</p>
+                                        <p><strong>Solicitante:</strong> ${sol.solicitante_nombre}</p>
+                                        <p><strong>Fechas:</strong> ${sol.fecha_inicio} al ${sol.fecha_fin}</p>
+                                        <p><strong>Aprobado por supervisor:</strong> ${new Date(sol.fecha_aprobacion_supervisor).toLocaleDateString()}</p>
+                                    </div>
+                                    <button onclick="verDetalle('${sol.codigo_comision}')" 
+                                            style="background: #004884; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                                        Validar
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    contenedor.innerHTML = html;
+                } else {
+                    contenedor.innerHTML = '<p style="text-align: center; color: #666;">No hay solicitudes pendientes de validación</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function verDetalle(codigo) {
+            // Cargar detalles completos de la comisión
+            try {
+                if (window.supabase) {
+                    const { data, error } = await supabase
+                        .from('comisiones_flujo')
+                        .select('*')
+                        .eq('codigo_comision', codigo)
+                        .single();
+                    
+                    if (!error && data) {
+                        comisionSeleccionada = data;
+                        mostrarModal(data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function mostrarModal(comision) {
+            const contenido = document.getElementById('detalleContenido');
+            contenido.innerHTML = `
+                <div style="display: grid; gap: 10px;">
+                    <p><strong>Código:</strong> ${comision.codigo_comision}</p>
+                    <p><strong>Proyecto:</strong> ${comision.proyecto}</p>
+                    <p><strong>Solicitante:</strong> ${comision.solicitante_nombre} - ${comision.cargo}</p>
+                    <p><strong>GIT:</strong> ${comision.git}</p>
+                    <p><strong>Municipio:</strong> ${comision.municipio}</p>
+                    <p><strong>Fechas:</strong> ${comision.fecha_inicio} al ${comision.fecha_fin} (${comision.dias_comision} días)</p>
+                    <p><strong>Objeto de la visita:</strong><br>${comision.objeto_visita}</p>
+                    <p><strong>Actividades:</strong><br>${comision.actividades_programadas}</p>
+                    ${comision.observaciones ? `<p><strong>Observaciones:</strong><br>${comision.observaciones}</p>` : ''}
+                    ${comision.supervisor_comentario ? `<p><strong>Comentario Supervisor:</strong><br>${comision.supervisor_comentario}</p>` : ''}
+                </div>
+            `;
+            
+            document.getElementById('modalDetalle').style.display = 'block';
+        }
+
+        async function aprobarComision() {
+            if (!comisionSeleccionada) return;
+            
+            const comentario = document.getElementById('comentarioAprobacion').value;
+            const nuevoEstado = currentUser.email === 'jvelez@ani.gov.co' ? 'aprobado_final' : 'pendiente_validacion';
+            
+            try {
+                const updateData = {
+                    estado: nuevoEstado,
+                    updated_at: new Date().toISOString()
+                };
+                
+                if (currentUser.email === 'jvelez@ani.gov.co') {
+                    updateData.validador_id = currentUser.id;
+                    updateData.validador_comentario = comentario;
+                    updateData.fecha_validacion_final = new Date().toISOString();
+                } else {
+                    updateData.supervisor_id = currentUser.id;
+                    updateData.supervisor_comentario = comentario;
+                    updateData.fecha_aprobacion_supervisor = new Date().toISOString();
+                }
+                
+                if (window.supabase) {
+                    const { error } = await supabase
+                        .from('comisiones_flujo')
+                        .update(updateData)
+                        .eq('codigo_comision', comisionSeleccionada.codigo_comision);
+                    
+                    if (error) throw error;
+                }
+                
+                alert('✅ Comisión aprobada exitosamente');
+                cerrarModal();
+                cargarDatos();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al aprobar comisión');
+            }
+        }
+
+        async function rechazarComision() {
+            if (!comisionSeleccionada) return;
+            
+            const comentario = document.getElementById('comentarioAprobacion').value;
+            if (!comentario) {
+                alert('Por favor indique el motivo del rechazo');
+                return;
+            }
+            
+            const nuevoEstado = currentUser.email === 'jvelez@ani.gov.co' ? 'rechazado_final' : 'rechazado_supervisor';
+            
+            try {
+                const updateData = {
+                    estado: nuevoEstado,
+                    updated_at: new Date().toISOString()
+                };
+                
+                if (currentUser.email === 'jvelez@ani.gov.co') {
+                    updateData.validador_id = currentUser.id;
+                    updateData.validador_comentario = comentario;
+                    updateData.fecha_validacion_final = new Date().toISOString();
+                } else {
+                    updateData.supervisor_id = currentUser.id;
+                    updateData.supervisor_comentario = comentario;
+                    updateData.fecha_aprobacion_supervisor = new Date().toISOString();
+                }
+                
+                if (window.supabase) {
+                    const { error } = await supabase
+                        .from('comisiones_flujo')
+                        .update(updateData)
+                        .eq('codigo_comision', comisionSeleccionada.codigo_comision);
+                    
+                    if (error) throw error;
+                }
+                
+                alert('❌ Comisión rechazada');
+                cerrarModal();
+                cargarDatos();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al rechazar comisión');
+            }
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalDetalle').style.display = 'none';
+            document.getElementById('comentarioAprobacion').value = '';
+            comisionSeleccionada = null;
+        }
+
+        function cambiarTab(vista) {
+            // Ocultar todas las vistas
+            document.querySelectorAll('.vista-contenido').forEach(v => v.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            // Mostrar vista seleccionada
+            if (vista === 'supervisor') {
+                document.getElementById('vistaSupervisor').style.display = 'block';
+            } else if (vista === 'validador') {
+                document.getElementById('vistaValidador').style.display = 'block';
+            } else if (vista === 'historial') {
+                document.getElementById('vistaHistorial').style.display = 'block';
+                cargarHistorial();
+            }
+            
+            // Activar tab
+            event.target.classList.add('active');
+        }
+
+        async function cargarResumenGIT() {
+            const contenedor = document.getElementById('resumenGIT');
+            
+            try {
+                if (window.supabase) {
+                    // Obtener resumen por GIT
+                    const { data, error } = await supabase
+                        .from('comisiones_flujo')
+                        .select('git, estado');
+                    
+                    if (!error && data) {
+                        const resumen = {};
+                        data.forEach(com => {
+                            if (!resumen[com.git]) {
+                                resumen[com.git] = {
+                                    total: 0,
+                                    pendientes: 0,
+                                    aprobadas: 0,
+                                    rechazadas: 0
+                                };
+                            }
+                            resumen[com.git].total++;
+                            if (com.estado.includes('pendiente')) resumen[com.git].pendientes++;
+                            if (com.estado.includes('aprobado')) resumen[com.git].aprobadas++;
+                            if (com.estado.includes('rechazado')) resumen[com.git].rechazadas++;
+                        });
+                        
+                        let html = `
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f5f5f5;">
+                                        <th style="padding: 12px; text-align: left;">GIT</th>
+                                        <th style="padding: 12px; text-align: center;">Total</th>
+                                        <th style="padding: 12px; text-align: center;">Pendientes</th>
+                                        <th style="padding: 12px; text-align: center;">Aprobadas</th>
+                                        <th style="padding: 12px; text-align: center;">Rechazadas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        
+                        Object.keys(resumen).forEach(git => {
+                            const datos = resumen[git];
+                            html += `
+                                <tr style="border-bottom: 1px solid #e0e0e0;">
+                                    <td style="padding: 12px; font-weight: bold;">${git}</td>
+                                    <td style="padding: 12px; text-align: center;">${datos.total}</td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 12px;">
+                                            ${datos.pendientes}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 12px;">
+                                            ${datos.aprobadas}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 12px;">
+                                            ${datos.rechazadas}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        
+                        html += '</tbody></table>';
+                        contenedor.innerHTML = html;
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function volverAlHub() {
+            window.location.href = 'hub.html';
         }
     </script>
 </body>
