@@ -564,15 +564,16 @@
                                 <label for="git">GIT Asignado *</label>
                                 <select id="git" name="git" required onchange="updateGitDescription()">
                                     <option value="">-- Seleccionar GIT --</option>
-                                    <option value="VPRE">Vicepresidencia Planeacion, Riesgos y Entorno</option>
-                                    <option value="Social">GIT Social</option>
-                                    <option value="Predial">GIT Predial</option>
-                                    <option value="Ambiental">GIT Ambiental</option>
-                                    <option value="JuridicoPredial">GIT Jurídico Predial</option>
-                                    <option value="Riesgos">GIT Riesgos</option>
-                                    <option value="Valorizacion">GIT Valorización</option>
-                                    <option value="TICs">GIT TICs</option>
-                                    <option value="SuperAdmin">Super Admin</option>
+                                    <option value="Vicepresidencia Planeacion, Riesgos y Entorno">Vicepresidencia Planeacion, Riesgos y Entorno</option>
+                                    <option value="GIT Planeación">GIT Planeación</option>
+                                    <option value="GIT Social">GIT Social</option>
+                                    <option value="GIT Predial">GIT Predial</option>
+                                    <option value="GIT Ambiental">GIT Ambiental</option>
+                                    <option value="GIT Jurídico Predial">GIT Jurídico Predial</option>
+                                    <option value="GIT Riesgos">GIT Riesgos</option>
+                                    <option value="GIT Valorización">GIT Valorización</option>
+                                    <option value="GIT TICs">GIT TICs</option>
+                                    <option value="Super Admin">Super Admin</option>
                                 </select>
                             </div>
                             
@@ -740,15 +741,16 @@
         function updateGitDescription() {
             const git = document.getElementById('git').value;
             const descriptions = {
-                'VPRE': 'VICEPRESIDENCIA',
-                'Social': 'GIT Social - Gestión Social',
-                'Predial': 'GIT Predial - Gestión de Predios',
-                'Ambiental': 'GIT Ambiental - Gestión Ambiental',
-                'JuridicoPredial': 'GIT Jurídico Predial - Gestión Legal',
-                'Riesgos': 'GIT Riesgos - Gestión de Riesgos',
-                'Valorizacion': 'GIT Valorización - Gestión de Valorización',
-                'TICs': 'GIT TICs - Tecnologías de la Información',
-                'SuperAdmin': 'Super Administrador del Sistema'
+                'Vicepresidencia Planeacion, Riesgos y Entorno': 'VICEPRESIDENCIA',
+                'GIT Planeación': 'GIT Planeación - Planeación Estratégica',
+                'GIT Social': 'GIT Social - Gestión Social',
+                'GIT Predial': 'GIT Predial - Gestión de Predios',
+                'GIT Ambiental': 'GIT Ambiental - Gestión Ambiental',
+                'GIT Jurídico Predial': 'GIT Jurídico Predial - Gestión Legal',
+                'GIT Riesgos': 'GIT Riesgos - Gestión de Riesgos',
+                'GIT Valorización': 'GIT Valorización - Gestión de Valorización',
+                'GIT TICs': 'GIT TICs - Tecnologías de la Información',
+                'Super Admin': 'Super Administrador del Sistema'
             };
             document.getElementById('git_description').value = descriptions[git] || '';
         }
@@ -1065,5 +1067,7 @@ Pedro Sánchez Ruiz,pedro.sanchez@ani.gov.co,PSanchez2025*,coordinador,Riesgos`;
 </body>
 
 </html>
+
+
 
 
