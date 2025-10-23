@@ -321,7 +321,7 @@
             es_extemporanea: validacion.esExtemporanea,
             justificacion_extemporanea: validacion.esExtemporanea ? 
                 document.getElementById('justificacionExtemporanea').value : null,
-            estado: validacion.esExtemporanea ? 'pendiente_aprobacion_admin' : 'pendiente_supervisor',
+            estado: 'pendiente_supervisor',
             created_at: new Date().toISOString()
         };
 
@@ -335,9 +335,9 @@
                 if (error) throw error;
 
                 // Si es extemporánea, crear notificación
-                if (validacion.esExtemporanea) {
-                    await crearNotificacionAdmin(data[0].id, comisionData);
-                }
+                //if (validacion.esExtemporanea) {
+                  //  await crearNotificacionAdmin(data[0].id, comisionData);
+                //}
             }
 
             let solicitudes = JSON.parse(localStorage.getItem('mis_solicitudes') || '[]');

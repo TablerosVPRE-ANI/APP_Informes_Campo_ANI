@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#004884">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <title>ANI Campo</title>
+</head>
+<body>
+
+    <div id="auth-section" style="display: none; min-height: 100vh; width:100%; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg,  #da723f 70%, #575756 30%);">
+        <div class="auth-container">
+            <div class="login-card">
+                <div class="header">
+                    <img src="icons/icon-512.png" alt="ANI Logo" style="width: 80px; height: 80px; margin: 0 auto 15px auto; display: block; background: white; border-radius: 50%; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <div class="header-text">
+        <h1>ANI-Go</h1>
+        <p>Sistema Inteligente de Informes de Comisión<br>VPRE</p>
+    </div>
+                </div>
+                <div class="form-container">
+                    <div id="errorMessage" class="message error-message"></div>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="email">Correo Electrónico</label>
+                            <input type="email" id="email" name="email" placeholder="usuario@ani.gov.co" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Contraseña</label>
+                            <input type="password" id="password" name="password" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="loginBtn">
+                            <span id="loginText">Iniciar Sesión</span>
+                            <div id="loginLoading" class="loading" style="display: none;"></div>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div style="position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px 0; text-align: center; border-top: 3px solid #da723f; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);">
+    <p style="margin: 0; color: #575756; font-size: 14px; font-weight: 600;">
+        Agencia Nacional de Infraestructura 2025 - VPRE
+    </p>
+    <p style="margin: 5px 0 0 0; color: #575756; font-size: 12px; opacity: 0.8;">
+        Vicepresidencia de Planeación, Riesgos y Entorno
+    </p>
+</div>
+    </div>
+
+    <div id="main-app-section" style="display: none;">
+        <div class="header">
+            <div class="logo-section">
+                <img src="icons/icon-512.png" alt="ANI" style="width: 50px; height: 50px; background: white; border-radius: 8px; padding: 5px;">
+                <div class="header-info">
+                    <h1>ANI-Go</h1>
+                    <p id="projectInfo">Sistema Inteligente de Informes de Comisión</p>
+                </div>
+            </div>
+            <div class="user-section">
+                <div class="user-info" id="userInfo" style="text-align: right; margin-right: 15px;">
+                    <div class="user-name" id="userName" style="font-weight: 600; font-size: 14px; color: white;">Usuario</div>
+                    <div class="user-git" id="userGit" style="font-size: 12px; opacity: 0.8; color: white;">GIT</div>
+                </div>
+                <div>
+                    <span class="status-indicator" id="connectionStatus"></span>
+                    <span id="connectionText" style="font-size: 12px;"></span>
+                </div>
+                <button onclick="logout()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-left: 10px;" title="Cerrar Sesión">🚪</button>
+                <button id="adminBtn" onclick="goToAdmin()" style="display: none; background: #ff6b6b; border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-left: 10px;" title="Administrar Usuarios">👥</button>
+            </div>
+        </div>
+        <div id="syncStatus" class="sync-status" style="display: none;"></div>
+        <div id="infoBasica" class="section active">
+            <div class="form-section">
+                <div class="form-title">📋 Información Básica</div>
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #004884;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="font-weight: 600; color: #004884; display: block; margin-bottom: 5px; font-size: 13px;">Funcionario Responsable:</label>
+                            <input type="text" id="funcionarioSession" readonly style="background: #f5f5f5; border: 1px solid #ccc; color: #333; font-weight: 500;">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600; color: #004884; display: block; margin-bottom: 5px; font-size: 13px;">GIT Asignado:</label>
+                            <input type="text" id="gitSession" readonly style="background: #f5f5f5; border: 1px solid #ccc; color: #333; font-weight: 500;">
+                        </div>
+                    </div>
+                </div>
+                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Nombre del Proyecto / Corredor Vial/ Evento *</label>
+                <input type="text" id="nombreProyecto" placeholder="Ej: Canal del Dique, Corredor Santana-Mocoa-Neiva" required>
+                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Nombre del Funcionario - Contratista-ANI *</label>
+                <input type="text" id="nombreFuncionario" placeholder="Nombre completo" required>
+                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Lugar específico *</label>
+                <input type="text" id="lugar" placeholder="Lugar específico en Cartagena" value="Cartagena" required>
+                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Fecha de salida *</label>
+                <input type="date" id="fechaSalida" required>
+                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Fecha de regreso *</label>
+                <input type="date" id="fechaRegreso" required>
+                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Objeto del desplazamiento *</label>
+                <textarea id="objeto" placeholder="Objeto del desplazamiento *" required></textarea>
+                <label style="font-size: 13px; color: #666; margin-bottom: 5px; display: block;">Otros participantes</label>
+                <input type="text" id="participantes" placeholder="Otros participantes (separar con comas)">
+            </div>
+        </div>
+        <div id="actividades" class="section">
+            <div class="form-section">
+                <div class="form-title">📝 Registrar Actividad</div>
+                <input type="text" id="actividadTitulo" placeholder="Título de la actividad o Tema">
+                <input type="datetime-local" id="actividadFecha">
+                <textarea id="actividadDescripcion" placeholder="Descripción detallada"></textarea>
+                <div style="margin: 10px 0;">
+                    <label style="font-size: 14px; color: #666; display: block; margin-bottom: 8px;">📷 Agregar evidencias (fotos)</label>
+                    <input type="file" id="actividadFoto" accept="image/*" multiple style="width: 100%; padding: 10px; border: 2px dashed #004884; border-radius: 6px; background: #f0f8ff;">
+                </div>
+                <p style="font-size: 12px; color: #666; margin: 5px 0;">Toca para seleccionar de galería o tomar foto nueva</p>
+                <button class="btn btn-primary" onclick="guardarActividad()">Agregar Actividad</button>
+            </div>
+            <div id="listaActividades"></div>
+        </div>
+        <div id="compromisos" class="section">
+            <div class="form-section">
+                <div class="form-title">🎯 Nuevo Compromiso</div>
+                <input type="text" id="compromisoDescripcion" placeholder="Descripción del compromiso">
+                <select id="compromisoResponsable">
+                    <option value="">Seleccionar responsable...</option>
+                    <option value="ANI">ANI</option>
+                    <option value="Concesionario">Concesionario</option>
+                    <option value="Interventoría">Interventoría</option>
+                    <option value="Entidad">Entidad</option>
+                    <option value="Ministerio">Ministerio</option>
+                </select>
+                <input type="date" id="compromisoFecha">
+                <select id="compromisoPrioridad">
+                    <option value="alta">Prioridad Alta</option>
+                    <option value="media">Prioridad Media</option>
+                    <option value="baja">Prioridad Baja</option>
+                </select>
+                <button class="btn btn-primary" onclick="guardarCompromiso()">Agregar Compromiso</button>
+            </div>
+            <div id="listaCompromisos"></div>
+        </div>
+        <div id="guardar" class="section">
+            <div class="form-section">
+                <div class="form-title">💾 Opciones de Guardado</div>
+                <div id="resumen"></div>
+                <button class="btn btn-success" onclick="guardarInforme()">💾 Guardar Localmente</button>
+                <button class="btn btn-primary" onclick="sincronizar()">☁️ Sincronizar</button>
+                <button class="btn btn-secondary" onclick="exportarJSON()">📥 Descargar JSON</button>
+            </div>
+        </div>
+        <!-- Sección Comisiones (Solo para Gerentes) -->
+<div id="comisiones" class="section">
+    <div class="form-section">
+        <div class="form-title">📅 Programación de Comisiones - <span id="gitComisiones"></span></div>
+        
+        <!-- Formulario para nueva comisión -->
+        <div id="formNuevaComision" style="background: #f0f8ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="color: #004884; margin-bottom: 15px;">➕ Programar Nueva Comisión</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label style="font-size: 13px; color: #666;">Mes *</label>
+                    <select id="comMes" required>
+                        <option value="">Seleccionar mes...</option>
+                        <option value="ENERO">Enero</option>
+                        <option value="FEBRERO">Febrero</option>
+                        <option value="MARZO">Marzo</option>
+                        <option value="ABRIL">Abril</option>
+                        <option value="MAYO">Mayo</option>
+                        <option value="JUNIO">Junio</option>
+                        <option value="JULIO">Julio</option>
+                        <option value="AGOSTO">Agosto</option>
+                        <option value="SEPTIEMBRE">Septiembre</option>
+                        <option value="OCTUBRE">Octubre</option>
+                        <option value="NOVIEMBRE">Noviembre</option>
+                        <option value="DICIEMBRE">Diciembre</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="font-size: 13px; color: #666;">Proyecto *</label>
+                    <input type="text" id="comProyecto" placeholder="Nombre del proyecto o corredor" required>
+                </div>
+                
+                <div>
+                    <label style="font-size: 13px; color: #666;">Municipio *</label>
+                    <input type="text" id="comMunicipio" placeholder="Ciudad o municipio" required>
+                </div>
+                
+                <div>
+                    <label style="font-size: 13px; color: #666;">Funcionario *</label>
+                    <input type="text" id="comFuncionario" placeholder="Nombre completo" required>
+                </div>
+                
+                <div>
+                    <label style="font-size: 13px; color: #666;">Cargo</label>
+                    <input type="text" id="comCargo" placeholder="Cargo del funcionario">
+                </div>
+                
+                <div>
+                    <label style="font-size: 13px; color: #666;">Fecha Inicio *</label>
+                    <input type="date" id="comFechaInicio" required>
+                </div>
+                
+                <div>
+                    <label style="font-size: 13px; color: #666;">Fecha Fin *</label>
+                    <input type="date" id="comFechaFin" required>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <label style="font-size: 13px; color: #666;">Actividades a Realizar *</label>
+                <textarea id="comActividades" placeholder="Describa las actividades programadas" style="width: 100%; min-height: 80px;" required></textarea>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <label style="font-size: 13px; color: #666;">Observaciones</label>
+                <textarea id="comObservaciones" placeholder="Observaciones adicionales (opcional)" style="width: 100%; min-height: 60px;"></textarea>
+            </div>
+            
+            <button class="btn btn-primary" onclick="guardarComision()" style="margin-top: 15px;">
+                💾 Guardar Comisión
+            </button>
+        </div>
+        
+        <!-- Lista de comisiones programadas -->
+        <div id="listaComisionesProgramadas">
+            <h3 style="color: #004884; margin: 20px 0;">📋 Comisiones Programadas</h3>
+            <div id="tablaComisiones"></div>
+        </div>
+    </div>
+</div>
+        <div class="floating-menu">
+            <button class="menu-btn active" onclick="cambiarSeccion('infoBasica', this)"><span style="font-size: 24px;">📋</span><span>Info</span></button>
+            <button class="menu-btn" onclick="cambiarSeccion('actividades', this)"><span style="font-size: 24px;">📝</span><span>Actividades</span></button>
+            <button class="menu-btn" onclick="cambiarSeccion('compromisos', this)"><span style="font-size: 24px;">🎯</span><span>Compromisos</span></button>
+            <button class="menu-btn" onclick="cambiarSeccion('guardar', this)"><span style="font-size: 24px;">💾</span><span>Guardar</span></button>
+            <button id="btnComisiones" class="menu-btn" onclick="cambiarSeccion('comisiones', this)" style="display: none;">
+                <span style="font-size: 24px;">📅</span>
+                <span>Comisiones</span>
+            </button>
+        </div>
+        <div id="modalEdicion" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <div class="form-title">✏️ Editar Actividad</div>
+                <input type="hidden" id="editActividadId">
+                <label>Título de la actividad</label>
+                <input type="text" id="editActividadTitulo" placeholder="Título de la actividad">
+                <label>Fecha y Hora</label>
+                <input type="datetime-local" id="editActividadFecha">
+                <label>Descripción</label>
+                <textarea id="editActividadDescripcion" placeholder="Descripción detallada"></textarea>
+                <label>Evidencias (Fotos)</label>
+                <div id="editGaleriaFotos" class="galeria-fotos" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; min-height: 80px;"></div>
+                <label>Añadir nuevas fotos</label>
+                <input type="file" id="editActividadNuevasFotos" accept="image/*" multiple style="width: 100%;">
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="cerrarModalEdicion()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarCambiosActividad()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    <script src="app.js"></script>
+    
+    <script>
+        let isLoading = false;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            const authSection = document.getElementById('auth-section');
+            const mainAppSection = document.getElementById('main-app-section');
+            const loginForm = document.getElementById('loginForm');
+            
+            const supabaseInitialized = initSupabase();
+            if (supabaseInitialized) {
+                window.APP_STATE.supabaseConnected = await testSupabaseConnection();
+            }
+            updateConnectionStatus();
+
+            const hasSession = window.authSystem.checkExistingSession();
+            
+            if (hasSession) {
+                authSection.style.display = 'none';
+                mainAppSection.style.display = 'block';
+                setupUserInterface();
+            } else {
+                authSection.style.display = 'flex';
+                mainAppSection.style.display = 'none';
+                loginForm.addEventListener('submit', handleLogin);
+            }
+        });
+        
+        async function handleLogin(e) {
+            e.preventDefault();
+            if (isLoading) return;
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+
+            if (!email || !password) {
+                showError('Por favor complete todos los campos');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const result = await window.authSystem.login(email, password);
+                if (result.success) {
+                    setTimeout(() => {
+                    window.location.href = 'hub.html';
+                }, 1500);
+                } else {
+                    showError(result.error || 'Error al iniciar sesión');
+                }
+            } catch (error) {
+                showError('Error de conexión. Intente nuevamente.');
+            } finally {
+                setLoading(false);
+            }
+        }
+        
+        function setLoading(loading) {
+            isLoading = loading;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginText = document.getElementById('loginText');
+            const loginLoading = document.getElementById('loginLoading');
+            loginBtn.disabled = loading;
+            loginText.style.display = loading ? 'none' : 'inline';
+            loginLoading.style.display = loading ? 'inline-block' : 'none';
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.innerHTML = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => { errorMessage.style.display = 'none'; }, 5000);
+        }
+
+        function updateConnectionStatus() {
+            const isOnline = navigator.onLine;
+            const connStatusDiv = document.querySelector('.connection-status');
+            if (connStatusDiv) { // Check for main app's indicator
+                const status = document.getElementById('connectionStatus');
+                const text = document.getElementById('connectionText');
+                if (isOnline) {
+                    status.className = 'status-indicator online';
+                    text.textContent = 'En línea';
+                } else {
+                    status.className = 'status-indicator offline';
+                    text.textContent = 'Sin conexión';
+                }
+            }
+        }
+        // Verificar permisos para comisiones
+function verificarPermisosComisiones() {
+    const user = window.APP_STATE.currentUser;
+    if (!user) return false;
+    
+    // Solo coordinadores, admin y superadmin pueden ver comisiones
+    const rolesPermitidos = ['coordinador', 'admin', 'superadmin'];
+    if (rolesPermitidos.includes(user.role)) {
+        document.getElementById('btnComisiones').style.display = 'inline-block';
+        document.getElementById('gitComisiones').textContent = user.git;
+        return true;
+    }
+    return false;
+}
+
+// Generar código único de comisión
+function generarCodigoComision() {
+    const user = window.APP_STATE.currentUser;
+    const fecha = new Date();
+    const año = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    
+    return `COM-${año}${mes}${dia}-${user.git}-${random}`;
+}
+
+// Guardar nueva comisión
+async function guardarComision() {
+    const user = window.APP_STATE.currentUser;
+    
+    const comisionData = {
+        codigo_comision: generarCodigoComision(),
+        mes: document.getElementById('comMes').value,
+        proyecto: document.getElementById('comProyecto').value,
+        municipio: document.getElementById('comMunicipio').value,
+        funcionario_nombre: document.getElementById('comFuncionario').value,
+        cargo: document.getElementById('comCargo').value,
+        fecha_inicio: document.getElementById('comFechaInicio').value,
+        fecha_fin: document.getElementById('comFechaFin').value,
+        actividades_programadas: document.getElementById('comActividades').value,
+        observaciones: document.getElementById('comObservaciones').value,
+        git: user.git,
+        estado: 'programada',
+        created_by: user.id
+    };
+    
+    // Validar campos requeridos
+    if (!comisionData.mes || !comisionData.proyecto || !comisionData.municipio || 
+        !comisionData.funcionario_nombre || !comisionData.fecha_inicio || 
+        !comisionData.fecha_fin || !comisionData.actividades_programadas) {
+        alert('Por favor complete todos los campos obligatorios');
+        return;
+    }
+    
+    try {
+        // Si hay conexión a Supabase
+        if (window.APP_STATE.supabaseConnected && window.supabase) {
+            const { data, error } = await supabase
+                .from('comisiones_flujo')
+                .insert([comisionData]);
+            
+            if (error) throw error;
+        }
+        
+        // Guardar también localmente
+        let comisionesLocales = JSON.parse(localStorage.getItem('ani_comisiones') || '[]');
+        comisionesLocales.push(comisionData);
+        localStorage.setItem('ani_comisiones', JSON.stringify(comisionesLocales));
+        
+        alert(`✅ Comisión programada exitosamente\nCódigo: ${comisionData.codigo_comision}`);
+        limpiarFormularioComision();
+        cargarComisiones();
+        
+    } catch (error) {
+        console.error('Error al guardar comisión:', error);
+        alert('Error al guardar la comisión. Se guardó localmente.');
+    }
+}
+
+// Cargar comisiones del GIT
+async function cargarComisiones() {
+    const user = window.APP_STATE.currentUser;
+    const tablaDiv = document.getElementById('tablaComisiones');
+    
+    let comisiones = [];
+    
+    try {
+        // Intentar cargar desde Supabase
+        if (window.APP_STATE.supabaseConnected && window.supabase) {
+            const { data, error } = await supabase
+                .from('comisiones_flujo')
+                .select('*')
+                .eq('git', user.git)
+                .order('fecha_inicio', { ascending: false });
+            
+            if (!error && data) {
+                comisiones = data;
+            }
+        }
+        
+        // Si no hay datos de Supabase, cargar local
+        if (comisiones.length === 0) {
+            const comisionesLocales = JSON.parse(localStorage.getItem('ani_comisiones') || '[]');
+            comisiones = comisionesLocales.filter(c => c.git === user.git);
+        }
+        
+        // Mostrar en tabla
+        if (comisiones.length > 0) {
+            let html = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #004884; color: white;">
+                            <th style="padding: 10px; text-align: left;">Código</th>
+                            <th style="padding: 10px;">Mes</th>
+                            <th style="padding: 10px;">Proyecto</th>
+                            <th style="padding: 10px;">Funcionario</th>
+                            <th style="padding: 10px;">Fechas</th>
+                            <th style="padding: 10px;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            comisiones.forEach(com => {
+                const estadoColor = com.estado === 'programada' ? '#ff9800' : 
+                                   com.estado === 'en_curso' ? '#2196F3' : '#4CAF50';
+                                   
+                html += `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 10px; font-size: 12px; font-weight: bold;">${com.codigo_comision}</td>
+                        <td style="padding: 10px; text-align: center;">${com.mes}</td>
+                        <td style="padding: 10px;">${com.proyecto}</td>
+                        <td style="padding: 10px;">${com.funcionario_nombre}</td>
+                        <td style="padding: 10px; font-size: 12px;">${com.fecha_inicio} al ${com.fecha_fin}</td>
+                        <td style="padding: 10px; text-align: center;">
+                            <span style="background: ${estadoColor}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px;">
+                                ${com.estado}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            tablaDiv.innerHTML = html;
+        } else {
+            tablaDiv.innerHTML = '<p style="text-align: center; color: #666;">No hay comisiones programadas</p>';
+        }
+        
+    } catch (error) {
+        console.error('Error al cargar comisiones:', error);
+        tablaDiv.innerHTML = '<p style="color: red;">Error al cargar comisiones</p>';
+    }
+}
+
+// Limpiar formulario
+function limpiarFormularioComision() {
+    document.getElementById('comMes').value = '';
+    document.getElementById('comProyecto').value = '';
+    document.getElementById('comMunicipio').value = '';
+    document.getElementById('comFuncionario').value = '';
+    document.getElementById('comCargo').value = '';
+    document.getElementById('comFechaInicio').value = '';
+    document.getElementById('comFechaFin').value = '';
+    document.getElementById('comActividades').value = '';
+    document.getElementById('comObservaciones').value = '';
+}
+        
+        function setupUserInterface() {
+            const user = window.APP_STATE.currentUser;
+            if (!user) return;
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userGit').textContent = `GIT: ${user.git}`;
+            document.getElementById('funcionarioSession').value = user.name;
+            document.getElementById('gitSession').value = `${user.git} - ${user.git_description}`;
+            if (user.role === 'superadmin') {
+                document.getElementById('adminBtn').style.display = 'inline-block';
+            }
+            document.title = `ANI Campo - ${user.git}`;
+            verificarPermisosComisiones();
+        }
+
+        function goToAdmin() {
+            window.location.href = 'admin-usuarios.html';
+        }
+
+        async function logout() {
+            if (confirm('¿Está seguro de que desea cerrar sesión?')) {
+                await window.authSystem.logout();
+                location.reload();
+            }
+        }
+
+        function cambiarSeccion(seccionId, boton) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(seccionId).classList.add('active');
+            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+            boton.classList.add('active');
+                if (seccionId === 'comisiones') {
+                    cargarComisiones();
+                }
+        }
+    </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/APP_Informes_Campo_ANI/sw.js')
+          .then(reg => console.log('✅ Service Worker registrado con éxito.'))
+          .catch(err => console.error('❌ Error al registrar Service Worker:', err));
+      }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
