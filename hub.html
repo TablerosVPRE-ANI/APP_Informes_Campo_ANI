@@ -180,20 +180,35 @@
         </div>
     </div>
 
-    <script>
+<script>
         // Verificar permisos al cargar
-        document.addEventListener('DOMContentLoaded', function() {
+
+        document.addEventListener('DOMContentLoaded', async function() { 
             const user = JSON.parse(localStorage.getItem('ani_current_user') || '{}');
-            
+
             // Mostrar/ocultar módulos según rol
             if (user.role === 'superadmin') {
                 document.getElementById('modAdmin').style.display = 'block';
             }
-            // Mostrar módulo de aprobaciones para supervisores y Johanna
-if (['coordinador', 'admin', 'superadmin'].includes(user.role) || user.email === 'jvelez@ani.gov.co') {
-    document.getElementById('modAprobaciones').style.display = 'block';
-}
             
+            // Mostrar módulo de aprobaciones para supervisores y Johanna
+            if (['coordinador', 'admin', 'superadmin'].includes(user.role) || user.email === 'jvelez@ani.gov.co') {
+                document.getElementById('modAprobaciones').style.display = 'block';
+            }
+
+            // --- CÓDIGO DE LA IMAGEN AÑADIDO Y CORREGIDO ---
+            // Mostrar módulo de extemporáneas solo para Johanna
+            if (user.email === 'jvelez@ani.gov.co' || user.role === 'superadmin') {
+                // ⚠️ ¡OJO! Asegúrate de que 'modExtemporaneas' exista en tu HTML
+                if (document.getElementById('modExtemporaneas')) {
+                    document.getElementById('modExtemporaneas').style.display = 'block';
+                    // Ahora esto es válido porque la función es 'async'
+                    await cargarContadorExtemporaneas(); 
+                } else {
+                    console.warn("El elemento 'modExtemporaneas' no se encontró en el HTML.");
+                }
+            }
+                     
             // Solo gerentes ven comisiones
             const rolesGerente = ['coordinador', 'admin', 'superadmin', 'contratista', 'funcionario'];
             if (!rolesGerente.includes(user.role)) {
@@ -224,6 +239,9 @@ if (['coordinador', 'admin', 'superadmin'].includes(user.role) || user.email ===
                 case 'aprobaciones':
                         window.location.href = 'vista-aprobaciones.html';
                         break;
+                case 'extemporaneas':
+                        window.location.href = 'vista-admin-extemporaneas.html';
+                        break;
                 default:
                     alert('Módulo en desarrollo');
             }
@@ -239,6 +257,29 @@ if (['coordinador', 'admin', 'superadmin'].includes(user.role) || user.email ===
                 localStorage.removeItem('ani_session');
                 localStorage.removeItem('ani_current_user');
                 window.location.href = 'index.html';
+            }
+        }
+        async function cargarContadorExtemporaneas() {
+            try {
+                if (!window.APP_STATE.supabaseConnected || !supabase) return;
+                
+                const { count, error } = await supabase
+                    .from('comisiones_flujo')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('es_extemporanea', true)
+                    .eq('estado', 'pendiente_aprobacion_admin');
+                
+                if (error) throw error;
+                
+                const contador = document.getElementById('contadorExtemporaneas');
+                if (count > 0) {
+                    contador.textContent = count;
+                    contador.style.display = 'inline-block';
+                } else {
+                    contador.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error cargando contador:', error);
             }
         }
     </script>

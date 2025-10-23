@@ -29,7 +29,22 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                     <div class="form-group">
                         <label>Proyecto/Corredor *</label>
-                        <input type="text" id="proyecto" required placeholder="Nombre del proyecto">
+                        <select id="proyectoSelect" required onchange="cargarDatosProyecto()">
+                            <option value="">-- Seleccione un proyecto --</option>
+                            <!-- Se carga dinámicamente -->
+                        </select>
+                    </div>
+
+                    <!-- Campo OTRO (oculto inicialmente) -->
+                    <div class="form-group" id="campoOtroProyecto" style="display: none;">
+                        <label>Especifique el proyecto *</label>
+                        <input type="text" id="otroProyecto" placeholder="Ej: Reunión internacional BID - Washington">
+                    </div>
+
+                    <!-- Campo modo (nuevo) -->
+                    <div class="form-group">
+                        <label>Modo de Transporte</label>
+                        <input type="text" id="modo" readonly style="background: #f5f5f5;">
                     </div>
                     <div class="form-group">
                         <label>Municipio/Ciudad *</label>
@@ -59,6 +74,14 @@
                         <label>Observaciones</label>
                         <textarea id="observaciones" rows="2" placeholder="Información adicional (opcional)"></textarea>
                     </div>
+                    <div class="form-group" id="grupoJustificacion" style="grid-column: span 2; display: none;">
+                        <label style="color: #ff9800;">⚠️ Justificación de Comisión Extemporánea *</label>
+                        <textarea id="justificacionExtemporanea" rows="4" 
+                                placeholder="Explique detalladamente por qué está solicitando esta comisión después del día 8 del mes (mínimo 50 caracteres)"></textarea>
+                        <div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 14px;">
+                            <strong>⚠️ Importante:</strong> Esta comisión requerirá aprobación de Johanna Vélez antes de ir al supervisor.
+                        </div>
+                    </div>
                 </div>
                 
                 <div style="margin-top: 30px; display: flex; gap: 10px;">
@@ -75,166 +98,384 @@
         <!-- Mis solicitudes -->
         <div class="card" style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
             <h2 style="color: #004884; margin-bottom: 20px;">Mis Solicitudes</h2>
+            <!-- Alerta de período -->
+            <div id="alertaPeriodo" style="padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;"></div>
             <div id="tablaSolicitudes"></div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
-    <script>
-        let currentUser = null;
 
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Asegurarse de que Supabase esté inicializado
-            if (!supabase) {
-                console.warn("⚠️ Supabase aún no está listo, intentando inicializar...");
-                await initSupabase();
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+    let currentUser = null;
+    let proyectosDisponibles = [];
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        if (!supabase) {
+            console.warn("⚠️ Supabase aún no está listo, intentando inicializar...");
+            await initSupabase();
+        }
+
+        currentUser = JSON.parse(localStorage.getItem('ani_current_user') || '{}');
+        if (!currentUser.email) {
+            alert('Debe iniciar sesión');
+            window.location.href = 'index.html';
+            return;
+        }
+
+        document.getElementById('userInfo').textContent = `${currentUser.name} - ${currentUser.git}`;
+        
+        // NUEVO: Verificar período y cargar proyectos
+        verificarPeriodo();
+        await cargarProyectosDisponibles();
+        cargarMisSolicitudes();
+    });
+
+    // NUEVA FUNCIÓN: Verificar período
+    function verificarPeriodo() {
+        const hoy = new Date();
+        const diaDelMes = hoy.getDate();
+        const alerta = document.getElementById('alertaPeriodo');
+        const grupoJustificacion = document.getElementById('grupoJustificacion');
+        
+        if (diaDelMes <= 8) {
+            alerta.style.background = '#d4edda';
+            alerta.style.color = '#155724';
+            alerta.innerHTML = `✅ Período normal de solicitud (Día ${diaDelMes}/8)`;
+            grupoJustificacion.style.display = 'none';
+            document.getElementById('justificacionExtemporanea').required = false;
+        } else {
+            alerta.style.background = '#fff3cd';
+            alerta.style.color = '#856404';
+            alerta.innerHTML = `⚠️ <strong>COMISIÓN EXTEMPORÁNEA</strong> (Día ${diaDelMes})<br>
+                Esta solicitud requiere justificación y será revisada por la Administración antes del supervisor.`;
+            grupoJustificacion.style.display = 'block';
+            document.getElementById('justificacionExtemporanea').required = true;
+        }
+    }
+
+    // NUEVA FUNCIÓN: Cargar proyectos del catálogo general
+    async function cargarProyectosDisponibles() {
+        try {
+            const mesActual = obtenerMesYear();
+            
+            const { data, error } = await supabase
+                .from('programacion_mensual')
+                .select('*')
+                .eq('git', 'GENERAL')
+                .eq('mes_year', mesActual)
+                .eq('activo', true)
+                .order('modo', { ascending: true })
+                .order('proyecto', { ascending: true });
+            
+            if (error) throw error;
+            
+            proyectosDisponibles = data || [];
+            
+            const select = document.getElementById('proyectoSelect');
+            select.innerHTML = '<option value="">-- Seleccione un proyecto --</option>';
+            
+            // Agrupar por modo
+            let modoActual = '';
+            proyectosDisponibles.forEach(proyecto => {
+                if (proyecto.modo !== modoActual) {
+                    if (modoActual !== '') {
+                        select.innerHTML += '</optgroup>';
+                    }
+                    select.innerHTML += `<optgroup label="${proyecto.modo}">`;
+                    modoActual = proyecto.modo;
+                }
+                
+                const option = document.createElement('option');
+                option.value = proyecto.id;
+                option.textContent = proyecto.proyecto;
+                option.dataset.proyecto = JSON.stringify(proyecto);
+                select.appendChild(option);
+            });
+            
+            if (modoActual !== '') {
+                select.innerHTML += '</optgroup>';
             }
+            
+            console.log(`✅ ${proyectosDisponibles.length} proyectos cargados`);
+        } catch (error) {
+            console.error('Error cargando proyectos:', error);
+            alert('Error al cargar catálogo de proyectos');
+        }
+    }
 
-            // Cargar usuario
-            currentUser = JSON.parse(localStorage.getItem('ani_current_user') || '{}');
-            if (!currentUser.email) {
-                alert('Debe iniciar sesión');
-                window.location.href = 'index.html';
+    // NUEVA FUNCIÓN: Cargar datos del proyecto seleccionado
+    function cargarDatosProyecto() {
+        const select = document.getElementById('proyectoSelect');
+        const selectedOption = select.options[select.selectedIndex];
+        const campoOtro = document.getElementById('campoOtroProyecto');
+        const inputOtro = document.getElementById('otroProyecto');
+        
+        if (!selectedOption.value) {
+            campoOtro.style.display = 'none';
+            inputOtro.required = false;
+            return;
+        }
+        
+        const proyecto = JSON.parse(selectedOption.dataset.proyecto);
+        
+        // Si es "OTRO", mostrar campo de texto
+        if (proyecto.proyecto.includes('OTRO')) {
+            campoOtro.style.display = 'block';
+            inputOtro.required = true;
+            document.getElementById('modo').value = '';
+            document.getElementById('objetoVisita').value = '';
+        } else {
+            campoOtro.style.display = 'none';
+            inputOtro.required = false;
+            
+            // Auto-completar datos
+            document.getElementById('modo').value = proyecto.modo || '';
+            document.getElementById('objetoVisita').value = proyecto.objeto_comision || '';
+        }
+    }
+
+    // NUEVA FUNCIÓN: Validar período
+    function validarPeriodoCreacion() {
+        const hoy = new Date();
+        const diaDelMes = hoy.getDate();
+        
+        return {
+            esExtemporanea: diaDelMes > 8,
+            dia: diaDelMes
+        };
+    }
+
+    // MODIFICAR: Función de envío
+    document.getElementById('formComision').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const validacion = validarPeriodoCreacion();
+        
+        // Validar justificación si es extemporánea
+        if (validacion.esExtemporanea) {
+            const justificacion = document.getElementById('justificacionExtemporanea').value.trim();
+            if (!justificacion || justificacion.length < 50) {
+                alert('⚠️ Debe proporcionar una justificación detallada (mínimo 50 caracteres)');
                 return;
             }
+            
+            const confirmar = confirm(
+                '⚠️ COMISIÓN EXTEMPORÁNEA\n\n' +
+                'Esta solicitud será enviada a Johanna Vélez para aprobación administrativa antes de llegar al supervisor.\n\n' +
+                '¿Desea continuar?'
+            );
+            
+            if (!confirmar) return;
+        }
 
-            document.getElementById('userInfo').textContent = `${currentUser.name} - ${currentUser.git}`;
+        // Obtener proyecto seleccionado
+        const proyectoId = document.getElementById('proyectoSelect').value;
+        if (!proyectoId) {
+            alert('Debe seleccionar un proyecto');
+            return;
+        }
+
+        const select = document.getElementById('proyectoSelect');
+        const selectedOption = select.options[select.selectedIndex];
+        const proyecto = JSON.parse(selectedOption.dataset.proyecto);
+        
+        // Determinar nombre del proyecto
+        let nombreProyecto = proyecto.proyecto;
+        if (proyecto.proyecto.includes('OTRO')) {
+            nombreProyecto = document.getElementById('otroProyecto').value;
+            if (!nombreProyecto) {
+                alert('Debe especificar el proyecto');
+                return;
+            }
+        }
+
+        const comisionData = {
+            codigo_comision: generarCodigo(),
+            programacion_id: parseInt(proyectoId),
+            solicitante_id: currentUser.id,
+            nombre_solicitante: currentUser.name,
+            cargo: currentUser.cargo || 'Contratista',
+            git_solicitante: currentUser.git,
+            proyecto: nombreProyecto,
+            modo: document.getElementById('modo').value || proyecto.modo,
+            municipio: document.getElementById('municipio').value,
+            objeto_visita: document.getElementById('objetoVisita').value,
+            actividades_programadas: document.getElementById('actividades').value,
+            fecha_inicio: document.getElementById('fechaInicio').value,
+            fecha_fin: document.getElementById('fechaFin').value,
+            dias_comision: document.getElementById('diasComision').value,
+            observaciones: document.getElementById('observaciones').value,
+            es_extemporanea: validacion.esExtemporanea,
+            justificacion_extemporanea: validacion.esExtemporanea ? 
+                document.getElementById('justificacionExtemporanea').value : null,
+            estado: validacion.esExtemporanea ? 'pendiente_aprobacion_admin' : 'pendiente_supervisor',
+            created_at: new Date().toISOString()
+        };
+
+        try {
+            if (window.APP_STATE.supabaseConnected && supabase) {
+                const { data, error } = await supabase
+                    .from('comisiones_flujo')
+                    .insert([comisionData])
+                    .select();
+                
+                if (error) throw error;
+
+                // Si es extemporánea, crear notificación
+                if (validacion.esExtemporanea) {
+                    await crearNotificacionAdmin(data[0].id, comisionData);
+                }
+            }
+
+            let solicitudes = JSON.parse(localStorage.getItem('mis_solicitudes') || '[]');
+            solicitudes.push(comisionData);
+            localStorage.setItem('mis_solicitudes', JSON.stringify(solicitudes));
+
+            let mensaje = `✅ Solicitud creada exitosamente\n\nCódigo: ${comisionData.codigo_comision}\n\n`;
+            
+            if (validacion.esExtemporanea) {
+                mensaje += '⚠️ COMISIÓN EXTEMPORÁNEA\n' +
+                          'Su solicitud será revisada por Johanna Vélez antes de pasar al supervisor.';
+            } else {
+                mensaje += 'Su solicitud ha sido enviada al supervisor para aprobación.';
+            }
+
+            alert(mensaje);
+            limpiarFormulario();
             cargarMisSolicitudes();
-        });
+        } catch (error) {
+            console.error('Error al enviar solicitud:', error);
+            alert('⚠️ Error al enviar solicitud. Se guardó localmente.');
+        }
+    });
 
-        document.getElementById('formComision').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const comisionData = {
-                codigo_comision: generarCodigo(),
-                solicitante_id: currentUser.id,
-                nombre_solicitante: currentUser.name,
-                cargo: currentUser.cargo || 'Contratista',
-                git_solicitante: currentUser.git,
-                proyecto: document.getElementById('proyecto').value,
-                municipio: document.getElementById('municipio').value,
-                objeto_visita: document.getElementById('objetoVisita').value,
-                actividades_programadas: document.getElementById('actividades').value,
-                fecha_inicio: document.getElementById('fechaInicio').value,
-                fecha_fin: document.getElementById('fechaFin').value,
-                dias_comision: document.getElementById('diasComision').value,
-                observaciones: document.getElementById('observaciones').value,
-                estado: 'pendiente_supervisor'
+    // NUEVA FUNCIÓN: Crear notificación para admin
+    async function crearNotificacionAdmin(comisionId, comisionData) {
+        try {
+            const notificacion = {
+                tipo: 'comision_extemporanea',
+                comision_id: comisionId,
+                usuario_notificado: 'jvelez@ani.gov.co',
+                mensaje: `Nueva comisión extemporánea de ${comisionData.nombre_solicitante} (${comisionData.git_solicitante}) para ${comisionData.proyecto}`,
+                leida: false,
+                created_at: new Date().toISOString()
             };
+            
+            await supabase.from('notificaciones_admin').insert([notificacion]);
+            console.log('✅ Notificación creada para admin');
+        } catch (error) {
+            console.error('Error creando notificación:', error);
+        }
+    }
 
-            try {
-                if (window.APP_STATE.supabaseConnected && supabase) {
-                    const { error } = await supabase.from('comisiones_flujo').insert([comisionData]);
-                    if (error) throw error;
-                }
+    // NUEVA FUNCIÓN: Obtener mes-año actual
+    function obtenerMesYear() {
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const fecha = new Date();
+        return `${meses[fecha.getMonth()]}-${fecha.getFullYear()}`;
+    }
 
-                let solicitudes = JSON.parse(localStorage.getItem('mis_solicitudes') || '[]');
-                solicitudes.push(comisionData);
-                localStorage.setItem('mis_solicitudes', JSON.stringify(solicitudes));
+    function generarCodigo() {
+        const fecha = new Date();
+        const año = fecha.getFullYear();
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        return `COM-${año}${mes}-${currentUser.git.replace(/\s+/g, '')}-${random}`;
+    }
 
-                alert(`✅ Solicitud enviada exitosamente\nCódigo: ${comisionData.codigo_comision}`);
-                limpiarFormulario();
-                cargarMisSolicitudes();
-            } catch (error) {
-                console.error('Error al enviar solicitud:', error);
-                alert('⚠️ Error al enviar solicitud. Se guardó localmente.');
+    function calcularDias() {
+        const inicio = new Date(document.getElementById('fechaInicio').value);
+        const fin = new Date(document.getElementById('fechaFin').value);
+        if (inicio && fin && fin >= inicio) {
+            const dias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+            document.getElementById('diasComision').value = dias;
+        }
+    }
+
+    async function cargarMisSolicitudes() {
+        const tabla = document.getElementById('tablaSolicitudes');
+        try {
+            let solicitudes = [];
+
+            if (window.APP_STATE.supabaseConnected && supabase) {
+                const { data, error } = await supabase
+                    .from('comisiones_flujo')
+                    .select('*')
+                    .eq('solicitante_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                if (!error) solicitudes = data || [];
             }
-        });
 
-        function generarCodigo() {
-            const fecha = new Date();
-            const año = fecha.getFullYear();
-            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-            const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-            return `COM-${año}${mes}-${currentUser.git}-${random}`;
-        }
+            if (solicitudes.length === 0)
+                solicitudes = JSON.parse(localStorage.getItem('mis_solicitudes') || '[]');
 
-        function calcularDias() {
-            const inicio = new Date(document.getElementById('fechaInicio').value);
-            const fin = new Date(document.getElementById('fechaFin').value);
-            if (inicio && fin && fin >= inicio) {
-                const dias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
-                document.getElementById('diasComision').value = dias;
+            if (solicitudes.length > 0) {
+                let html = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f5f5f5;">
+                                <th>Código</th>
+                                <th>Proyecto</th>
+                                <th>Fechas</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                solicitudes.forEach(sol => {
+                    const badge = sol.es_extemporanea ? ' <span style="background:#ff9800;color:white;padding:2px 6px;border-radius:3px;font-size:11px;">EXTMP</span>' : '';
+                    html += `
+                        <tr>
+                            <td>${sol.codigo_comision}${badge}</td>
+                            <td>${sol.proyecto}</td>
+                            <td>${sol.fecha_inicio} al ${sol.fecha_fin}</td>
+                            <td>${formatEstado(sol.estado)}</td>
+                            <td><button onclick="verDetalle('${sol.codigo_comision}')">👁️ Ver</button></td>
+                        </tr>`;
+                });
+                html += "</tbody></table>";
+                tabla.innerHTML = html;
+            } else {
+                tabla.innerHTML = '<p style="text-align:center;color:#666;">No hay solicitudes registradas</p>';
             }
+        } catch (error) {
+            console.error('Error al cargar solicitudes:', error);
+            tabla.innerHTML = '<p style="color:red;">Error al cargar solicitudes</p>';
         }
+    }
 
-        async function cargarMisSolicitudes() {
-            const tabla = document.getElementById('tablaSolicitudes');
-            try {
-                let solicitudes = [];
+    function formatEstado(estado) {
+        const estados = {
+            pendiente_aprobacion_admin: '⏳ Pendiente Admin',
+            rechazado_admin: '❌ Rechazado Admin',
+            pendiente_supervisor: 'Pendiente Supervisor',
+            aprobado_supervisor: 'Aprobado por Supervisor',
+            rechazado_supervisor: 'Rechazado por Supervisor',
+            pendiente_validacion: 'En Validación Final',
+            aprobado_final: 'Aprobado',
+            rechazado_final: 'Rechazado'
+        };
+        return estados[estado] || estado;
+    }
 
-                if (window.APP_STATE.supabaseConnected && supabase) {
-                    const { data, error } = await supabase
-                        .from('comisiones_flujo')
-                        .select('*')
-                        .eq('solicitante_id', currentUser.id)
-                        .order('created_at', { ascending: false });
-                    if (!error) solicitudes = data || [];
-                }
+    function verDetalle(codigo) {
+        alert(`Ver detalles de: ${codigo}`);
+    }
 
-                if (solicitudes.length === 0)
-                    solicitudes = JSON.parse(localStorage.getItem('mis_solicitudes') || '[]');
+    function limpiarFormulario() {
+        document.getElementById('formComision').reset();
+        document.getElementById('diasComision').value = '';
+        document.getElementById('campoOtroProyecto').style.display = 'none';
+        verificarPeriodo();
+    }
 
-                if (solicitudes.length > 0) {
-                    let html = `
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #f5f5f5;">
-                                    <th>Código</th>
-                                    <th>Proyecto</th>
-                                    <th>Fechas</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-                    solicitudes.forEach(sol => {
-                        html += `
-                            <tr>
-                                <td>${sol.codigo_comision}</td>
-                                <td>${sol.proyecto}</td>
-                                <td>${sol.fecha_inicio} al ${sol.fecha_fin}</td>
-                                <td>${formatEstado(sol.estado)}</td>
-                                <td><button onclick="verDetalle('${sol.codigo_comision}')">👁️ Ver</button></td>
-                            </tr>`;
-                    });
-                    html += "</tbody></table>";
-                    tabla.innerHTML = html;
-                } else {
-                    tabla.innerHTML = '<p style="text-align:center;color:#666;">No hay solicitudes registradas</p>';
-                }
-            } catch (error) {
-                console.error('Error al cargar solicitudes:', error);
-                tabla.innerHTML = '<p style="color:red;">Error al cargar solicitudes</p>';
-            }
-        }
-
-        function formatEstado(estado) {
-            const estados = {
-                pendiente_supervisor: 'Pendiente Supervisor',
-                aprobado_supervisor: 'Aprobado por Supervisor',
-                rechazado_supervisor: 'Rechazado por Supervisor',
-                pendiente_validacion: 'En Validación Final',
-                aprobado_final: 'Aprobado',
-                rechazado_final: 'Rechazado'
-            };
-            return estados[estado] || estado;
-        }
-
-        function verDetalle(codigo) {
-            alert(`Ver detalles de: ${codigo}`);
-        }
-
-        function limpiarFormulario() {
-            document.getElementById('formComision').reset();
-            document.getElementById('diasComision').value = '';
-        }
-
-        function volverAlHub() {
-            window.location.href = 'hub.html';
-        }
-    </script>
+    function volverAlHub() {
+        window.location.href = 'hub.html';
+    }
+</script>
 </body>
 </html>
