@@ -147,6 +147,9 @@
             <div>
                 <h1>⚠️ Comisiones Extemporáneas</h1>
                 <p id="userInfo"></p>
+                <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin-top: 8px;">
+                    Supervisión de comisiones creadas fuera del período regular (día 9+)
+                </p>
             </div>
             <button onclick="window.location.href='hub.html'" style="background: white; color: #004884; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
                 ← Volver al Hub
@@ -160,27 +163,34 @@
         <div class="stats-grid">
             <div class="stat-card" style="border-top: 4px solid #ffc107;">
                 <div class="stat-number" style="color: #ff9800;" id="totalPendientes">0</div>
-                <div class="stat-label">Pendientes de Revisar</div>
+                <div class="stat-label">Total Extemporáneas</div>
             </div>
             <div class="stat-card" style="border-top: 4px solid #28a745;">
                 <div class="stat-number" style="color: #28a745;" id="totalAprobadas">0</div>
-                <div class="stat-label">Aprobadas Hoy</div>
+                <div class="stat-label">Aprobadas por Supervisor</div>
             </div>
             <div class="stat-card" style="border-top: 4px solid #dc3545;">
                 <div class="stat-number" style="color: #dc3545;" id="totalRechazadas">0</div>
-                <div class="stat-label">Rechazadas Hoy</div>
+                <div class="stat-label">Rechazadas por Supervisor</div>
             </div>
         </div>
 
         <!-- Filtros -->
-        <div class="card" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                <div>
-                    <label style="font-weight: 600; margin-right: 10px;">Filtrar por GIT:</label>
-                    <select id="filtroGIT" onchange="aplicarFiltros()" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
-                        <option value="">Todos los GITs</option>
-                    </select>
-                </div>
+<div class="card" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 250px;">
+            <label style="font-weight: 600; margin-right: 10px;">🔍 Buscar:</label>
+            <input type="text" id="campoBusqueda" placeholder="Buscar por código, solicitante o proyecto..." 
+                   onkeyup="aplicarFiltros()" 
+                   style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd;">
+        </div>
+        
+        <div>
+            <label style="font-weight: 600; margin-right: 10px;">Filtrar por GIT:</label>
+            <select id="filtroGIT" onchange="aplicarFiltros()" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                <option value="">Todos los GITs</option>
+            </select>
+        </div>
                 
                 <div>
                     <label style="font-weight: 600; margin-right: 10px;">Estado:</label>
@@ -256,11 +266,13 @@
 
         async function cargarComisiones() {
             try {
-                const { data, error } = await supabase
-                    .from('comisiones_flujo')
-                    .select('*')
-                    .eq('es_extemporanea', true)
-                    .order('created_at', { ascending: false });
+// Cargar SOLO comisiones extemporáneas ya procesadas por supervisor
+            const { data, error } = await supabase
+                .from('comisiones_flujo')
+                .select('*')
+                .eq('es_extemporanea', true)
+                .in('estado', ['aprobado_supervisor', 'rechazado_supervisor'])
+                .order('created_at', { ascending: false });
                 
                 if (error) throw error;
                 
@@ -275,25 +287,20 @@
             }
         }
 
-        function actualizarEstadisticas() {
-            const hoy = new Date().toDateString();
-            
-            const pendientes = comisionesData.filter(c => 
-                c.estado === 'pendiente_aprobacion_admin').length;
-            
-            const aprobadasHoy = comisionesData.filter(c => 
-                c.aprobada_por_admin === true && 
-                c.fecha_aprobacion_admin &&
-                new Date(c.fecha_aprobacion_admin).toDateString() === hoy).length;
-            
-            const rechazadasHoy = comisionesData.filter(c => 
-                c.aprobada_por_admin === false && 
-                c.fecha_aprobacion_admin &&
-                new Date(c.fecha_aprobacion_admin).toDateString() === hoy).length;
-            
-            document.getElementById('totalPendientes').textContent = pendientes;
-            document.getElementById('totalAprobadas').textContent = aprobadasHoy;
-            document.getElementById('totalRechazadas').textContent = rechazadasHoy;
+function actualizarEstadisticas() {
+    const hoy = new Date().toDateString();
+    
+    const totalExtemporaneas = comisionesData.length;
+    
+    const aprobadasPorSupervisor = comisionesData.filter(c => 
+        c.estado === 'aprobado_supervisor').length;
+    
+    const rechazadasPorSupervisor = comisionesData.filter(c => 
+        c.estado === 'rechazado_supervisor').length;
+    
+    document.getElementById('totalPendientes').textContent = totalExtemporaneas;
+    document.getElementById('totalAprobadas').textContent = aprobadasPorSupervisor;
+    document.getElementById('totalRechazadas').textContent = rechazadasPorSupervisor;
         }
 
         function cargarGITsEnFiltro() {
@@ -307,27 +314,27 @@
             });
         }
 
-        function aplicarFiltros() {
-            const filtroGIT = document.getElementById('filtroGIT').value;
-            const filtroEstado = document.getElementById('filtroEstado').value;
-            
-            let comisionesFiltradas = comisionesData;
-            
-            // Filtrar por GIT
-            if (filtroGIT) {
-                comisionesFiltradas = comisionesFiltradas.filter(c => c.git_solicitante === filtroGIT);
-            }
-            
-            // Filtrar por estado
-            if (filtroEstado === 'aprobada') {
-                comisionesFiltradas = comisionesFiltradas.filter(c => c.aprobada_por_admin === true);
-            } else if (filtroEstado === 'rechazada') {
-                comisionesFiltradas = comisionesFiltradas.filter(c => c.aprobada_por_admin === false);
-            } else if (filtroEstado) {
-                comisionesFiltradas = comisionesFiltradas.filter(c => c.estado === filtroEstado);
-            }
-            
-            renderizarComisiones(comisionesFiltradas);
+function aplicarFiltros() {
+    const filtroGIT = document.getElementById('filtroGIT').value;
+    const filtroEstado = document.getElementById('filtroEstado').value;
+    const busqueda = document.getElementById('campoBusqueda').value.toLowerCase().trim();
+    
+    let comisionesFiltradas = comisionesData;
+    
+    // Filtrar por búsqueda
+    if (busqueda) {
+        comisionesFiltradas = comisionesFiltradas.filter(c => 
+            c.codigo_comision.toLowerCase().includes(busqueda) ||
+            c.nombre_solicitante.toLowerCase().includes(busqueda) ||
+            c.proyecto.toLowerCase().includes(busqueda) ||
+            c.municipio?.toLowerCase().includes(busqueda)
+        );
+    }
+    
+    // Filtrar por GIT
+    if (filtroGIT) {
+        comisionesFiltradas = comisionesFiltradas.filter(c => c.git_solicitante === filtroGIT);
+    }
         }
 
         function renderizarComisiones(comisiones) {
@@ -404,12 +411,7 @@
                         
                         ${esPendiente ? `
                             <div class="acciones-btn">
-                                <button onclick="abrirModalAprobar(${com.id})" class="btn btn-success" style="background: #28a745;">
-                                    ✅ Aprobar
-                                </button>
-                                <button onclick="abrirModalRechazar(${com.id})" class="btn btn-danger" style="background: #dc3545;">
-                                    ❌ Rechazar
-                                </button>
+
                             </div>
                         ` : ''}
                     </div>
@@ -419,15 +421,15 @@
             container.innerHTML = html;
         }
 
-        function getBadgeEstado(comision) {
-            if (comision.aprobada_por_admin === true) {
-                return '<span class="badge badge-aprobada">✅ Aprobada</span>';
-            } else if (comision.aprobada_por_admin === false) {
-                return '<span class="badge badge-rechazada">❌ Rechazada</span>';
-            } else {
-                return '<span class="badge badge-pendiente">⏳ Pendiente Revisión</span>';
-            }
-        }
+function getBadgeEstado(comision) {
+    if (comision.estado === 'aprobado_supervisor') {
+        return '<span class="badge badge-aprobada">✅ Aprobada por Supervisor</span>';
+    } else if (comision.estado === 'rechazado_supervisor') {
+        return '<span class="badge badge-rechazada">❌ Rechazada por Supervisor</span>';
+    } else {
+        return '<span class="badge badge-pendiente">⏳ En Proceso</span>';
+    }
+}
 
         function formatearFecha(fecha) {
             if (!fecha) return 'N/A';
