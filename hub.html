@@ -275,29 +275,33 @@
                 window.location.href = 'index.html';
             }
         }
-        async function cargarContadorExtemporaneas() {
-            try {
-                if (!window.APP_STATE.supabaseConnected || !supabase) return;
-                
-                const { count, error } = await supabase
-                    .from('comisiones_flujo')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('es_extemporanea', true)
-                    .eq('estado', 'pendiente_aprobacion_admin');
-                
-                if (error) throw error;
-                
-                const contador = document.getElementById('contadorExtemporaneas');
-                if (count > 0) {
-                    contador.textContent = count;
-                    contador.style.display = 'inline-block';
-                } else {
-                    contador.style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Error cargando contador:', error);
-            }
+async function cargarContadorExtemporaneas() {
+    try {
+        // Solo verificar que supabase existe
+        if (!supabase) {
+            console.log('Supabase no disponible aún');
+            return;
         }
+        
+        const { count, error } = await supabase
+            .from('comisiones_flujo')
+            .select('*', { count: 'exact', head: true })
+            .eq('es_extemporanea', true)
+            .eq('estado', 'pendiente_aprobacion_admin');
+        
+        if (error) throw error;
+        
+        const contador = document.getElementById('contadorExtemporaneas');
+        if (count > 0) {
+            contador.textContent = count;
+            contador.style.display = 'inline-block';
+        } else {
+            contador.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error cargando contador:', error);
+    }
+}
     </script>
 </body>
 

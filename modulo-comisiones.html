@@ -71,6 +71,15 @@
                         <textarea id="actividades" required rows="4" placeholder="Detalle las actividades programadas"></textarea>
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
+                        <label>Rol y Actividades a Desarrollar *</label>
+                        <textarea id="rolActividades" required rows="3" placeholder="Describa su rol específico y las actividades que desarrollará durante la comisión"></textarea>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Áreas que Acompañan la Comisión</label>
+                        <textarea id="areasAcompanan" rows="2" placeholder="Indique las áreas de la ANI que participarán (opcional)"></textarea>
+                        <small style="color: #666; font-size: 12px;">Ejemplo: GIT Predial, GIT Ambiental, Oficina Jurídica</small>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
                         <label>Observaciones</label>
                         <textarea id="observaciones" rows="2" placeholder="Información adicional (opcional)"></textarea>
                     </div>
@@ -307,6 +316,8 @@
             fecha_fin: document.getElementById('fechaFin').value,
             dias_comision: document.getElementById('diasComision').value,
             observaciones: document.getElementById('observaciones').value,
+            rol_actividades: document.getElementById('rolActividades').value,
+            areas_acompanan: document.getElementById('areasAcompanan').value,
             es_extemporanea: validacion.esExtemporanea,
             justificacion_extemporanea: validacion.esExtemporanea ? 
                 document.getElementById('justificacionExtemporanea').value : null,
