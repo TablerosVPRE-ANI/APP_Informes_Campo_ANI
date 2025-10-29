@@ -476,6 +476,146 @@
             justify-content: flex-end;
             gap: 10px;
         }
+        /* Estilos para carga masiva mejorada */
+        .upload-area {
+            border: 3px dashed #004884;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            margin: 20px 0;
+        }
+
+        .upload-area:hover {
+            border-color: #0066cc;
+            background: #f0f7ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: #e8f5e9;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .preview-table th {
+            background: #004884;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .preview-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .preview-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-valid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .error-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .error-item {
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .btn-download {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #138496;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
@@ -552,8 +692,9 @@
                                 <label for="role">Rol *</label>
                                 <select id="role" name="role" required>
                                     <option value="">-- Seleccionar Rol --</option>
-                                    <option value="funcionario">Funcionario-ANI</option>
-                                    <option value="contratista">Contratista-ANI</option>
+                                    <option value="profesional">Profesional</option>
+                                    <option value="funcionario">Funcionario</option>
+                                    <option value="contratista">Contratista</option>
                                     <option value="coordinador">Coordinador</option>
                                     <option value="admin">Administrador</option>
                                     <option value="superadmin">Super Administrador</option>
@@ -637,33 +778,121 @@
             </div>
 
             <!-- TAB: Carga Masiva -->
-            <div id="bulk-tab" class="tab-content">
-                <div class="form-section">
-                    <div class="form-title">
-                        <span>📦</span>
-                        <span>Crear Múltiples Usuarios</span>
-                    </div>
-                    
-                    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="color: #1976d2; font-size: 14px;">
-                            <strong>Formato CSV requerido:</strong><br>
-                            nombre,email,password,role,git<br>
-                            Juan Pérez,juan@ani.gov.co,Pass2025*,funcionario,Social<br>
-                            María García,maria@ani.gov.co,Pass2025*,coordinador,Predial
-                        </p>
-                    </div>
-                    
-                    <textarea id="bulkData" rows="10" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: monospace; font-size: 13px;" placeholder="Pegue aquí los datos CSV o escriba línea por línea..."></textarea>
-                    
-                    <div class="form-actions">
-                        <button class="btn btn-primary" onclick="processBulkUsers()">
-                            <span>⬆️</span> Procesar y Crear Usuarios
-                        </button>
-                        <button class="btn btn-secondary" onclick="downloadTemplate()">
-                            <span>⬇️</span> Descargar Plantilla CSV
-                        </button>
-                    </div>
+<!-- TAB: Carga Masiva MEJORADO -->
+<div id="bulk-tab" class="tab-content">
+    <div class="form-section">
+        <div class="form-title">
+            <span>📦</span>
+            <span>Carga Masiva de Usuarios</span>
+        </div>
+        
+        <!-- Instrucciones -->
+        <div class="alert alert-info show">
+            <strong>📋 Instrucciones:</strong>
+            <ol style="margin: 10px 0 0 20px;">
+                <li>Descargue la plantilla haciendo click en "Descargar Plantilla"</li>
+                <li>Complete los datos (Excel o CSV)</li>
+                <li>Suba el archivo completado</li>
+                <li>Revise la vista previa y confirme</li>
+            </ol>
+        </div>
+
+        <!-- Botones de plantilla -->
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="descargarPlantillaExcel()" class="btn btn-download">
+                📥 Descargar Plantilla Excel
+            </button>
+            <button onclick="descargarPlantillaCSV()" class="btn btn-secondary">
+                📄 Descargar Plantilla CSV
+            </button>
+        </div>
+
+        <!-- Área de carga -->
+        <div id="uploadSection">
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInputBulk').click()">
+                <div class="upload-icon">📄</div>
+                <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">
+                    Arrastra tu archivo aquí o haz click para seleccionar
                 </div>
+                <div style="color: #666; font-size: 14px;">
+                    Soportado: Excel (.xlsx, .xls) o CSV
+                </div>
+            </div>
+            <input type="file" id="fileInputBulk" accept=".xlsx,.xls,.csv" onchange="procesarArchivoBulk(event)">
+        </div>
+
+        <!-- Vista Previa -->
+        <div id="previewSection" class="hidden">
+            <h3 style="margin: 20px 0;">👀 Vista Previa de Usuarios</h3>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="bulkTotalUsuarios">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                    <div class="stat-number" id="bulkUsuariosValidos">0</div>
+                    <div class="stat-label">Válidos</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                    <div class="stat-number" id="bulkUsuariosErrores">0</div>
+                    <div class="stat-label">Con Errores</div>
+                </div>
+            </div>
+
+            <div id="erroresContainer" class="hidden">
+                <strong style="color: #dc3545;">⚠️ Errores de Validación:</strong>
+                <div class="error-list" id="errorList"></div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="preview-table" id="previewTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>GIT</th>
+                            <th>Rol</th>
+                            <th>Contraseña</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewBody"></tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                <button onclick="cancelarCarga()" class="btn btn-secondary">
+                    ❌ Cancelar
+                </button>
+                <button onclick="crearUsuariosMasivos()" class="btn btn-success" id="btnCrearMasivo">
+                    ✅ Crear Usuarios
+                </button>
+            </div>
+        </div>
+
+        <!-- Progreso -->
+        <div id="progressSection" class="hidden">
+            <h3>⏳ Creando Usuarios...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar">0%</div>
+            </div>
+            <div id="progressText" style="text-align: center; color: #666; margin-top: 10px;"></div>
+        </div>
+
+        <!-- Reporte Final -->
+        <div id="reportSection" class="hidden">
+            <h3>📊 Reporte de Creación</h3>
+            <div id="reportContent"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="resetearCargaMasiva()" class="btn btn-primary">
+                    🔄 Cargar Más Usuarios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
         </div>
     </div>
@@ -683,6 +912,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         // Configuración de Supabase
         const SUPABASE_URL = 'https://frvpwkhifdoimnlcngks.supabase.co';
@@ -918,86 +1148,9 @@
             showAlert('info', 'ℹ️ Función de edición en desarrollo. Use eliminar y crear nuevo por ahora.');
         }
 
-        // Procesar carga masiva de usuarios
-        async function processBulkUsers() {
-            const bulkData = document.getElementById('bulkData').value.trim();
-            
-            if (!bulkData) {
-                showAlert('error', '❌ Por favor, ingrese los datos CSV');
-                return;
-            }
-            
-            const lines = bulkData.split('\n').filter(line => line.trim());
-            const users = [];
-            
-            // Procesar cada línea
-            lines.forEach((line, index) => {
-                // Saltar encabezados si los hay
-                if (index === 0 && line.toLowerCase().includes('nombre')) {
-                    return;
-                }
-                
-                const parts = line.split(',').map(p => p.trim());
-                
-                if (parts.length >= 5) {
-                    const gitDescriptions = {
-                        'Social': 'GIT Social - Gestión Social',
-                        'Predial': 'GIT Predial - Gestión de Predios',
-                        'Ambiental': 'GIT Ambiental - Gestión Ambiental',
-                        'JuridicoPredial': 'GIT Jurídico Predial - Gestión Legal',
-                        'Riesgos': 'GIT Riesgos - Gestión de Riesgos',
-                        'Valorizacion': 'GIT Valorización - Gestión de Valorización',
-                        'TICs': 'GIT TICs - Tecnologías de la Información',
-                        'SuperAdmin': 'Super Administrador del Sistema'
-                    };
-                    
-                    users.push({
-                        name: parts[0],
-                        email: parts[1],
-                        password: parts[2],
-                        role: parts[3],
-                        git: parts[4],
-                        git_description: gitDescriptions[parts[4]] || `GIT ${parts[4]}`,
-                        active: true
-                    });
-                }
-            });
-            
-            if (users.length === 0) {
-                showAlert('error', '❌ No se encontraron datos válidos para procesar');
-                return;
-            }
-            
-            try {
-                const { data, error } = await supabase
-                    .from('usuarios')
-                    .insert(users);
-                
-                if (error) throw error;
-                
-                showAlert('success', `✅ ${users.length} usuarios creados exitosamente`);
-                document.getElementById('bulkData').value = '';
-                updateStats();
-            } catch (error) {
-                showAlert('error', `❌ Error al crear usuarios: ${error.message}`);
-            }
-        }
 
-        // Descargar plantilla CSV
-        function downloadTemplate() {
-            const csvContent = `nombre,email,password,role,git
-Juan Pérez García,juan.perez@ani.gov.co,JPerez2025*,funcionario,Social
-María López Rodríguez,maria.lopez@ani.gov.co,MLopez2025*,coordinador,Predial
-Carlos Martínez Silva,carlos.martinez@ani.gov.co,CMartinez2025*,funcionario,Ambiental
-Ana García Torres,ana.garcia@ani.gov.co,AGarcia2025*,admin,JuridicoPredial
-Pedro Sánchez Ruiz,pedro.sanchez@ani.gov.co,PSanchez2025*,coordinador,Riesgos`;
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'plantilla_usuarios_ani.csv';
-            link.click();
-        }
+
 
         // Mostrar alertas
         function showAlert(type, message) {
@@ -1063,6 +1216,487 @@ Pedro Sánchez Ruiz,pedro.sanchez@ani.gov.co,PSanchez2025*,coordinador,Riesgos`;
                 closeModal();
             }
         }
+        // ============================================================================
+        // FUNCIONES DE CARGA MASIVA MEJORADA
+        // ============================================================================
+
+        let usuariosBulkData = [];
+
+        // Constantes de validación
+        const GITS_VALIDOS = [
+            'Vicepresidencia Planeacion, Riesgos y Entorno',
+            'GIT Planeación',
+            'GIT Social',
+            'GIT Predial',
+            'GIT Ambiental',
+            'GIT Jurídico Predial',
+            'GIT Asesoría Jurídica',
+            'GIT Riesgos',
+            'GIT Valorización',
+            'GIT Valorizacion',
+            'GIT TICs',
+            'GIT TIC',
+            'Super Admin'
+        ];
+
+        const ROLES_VALIDOS = ['profesional', 'funcionario', 'contratista', 'coordinador', 'admin', 'superadmin'];;
+
+        // Drag & Drop
+        const uploadAreaBulk = document.getElementById('uploadArea');
+        
+        if (uploadAreaBulk) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadAreaBulk.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadAreaBulk.addEventListener(eventName, () => {
+                    uploadAreaBulk.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadAreaBulk.addEventListener(eventName, () => {
+                    uploadAreaBulk.classList.remove('dragover');
+                }, false);
+            });
+
+            uploadAreaBulk.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                document.getElementById('fileInputBulk').files = files;
+                procesarArchivoBulk({ target: { files } });
+            }, false);
+        }
+
+        // Descargar plantilla Excel
+        function descargarPlantillaExcel() {
+            if (typeof XLSX === 'undefined') {
+                showAlert('error', '❌ Error: Librería XLSX no cargada');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            
+            const data = [
+                ['Nombre Completo', 'Correo Electrónico', 'GIT', 'Rol'],
+                ['Juan Pérez García', 'jperez@ani.gov.co', 'GIT Social', 'profesional'],
+                ['María López Rodríguez', 'mlopez@ani.gov.co', 'GIT Predial', 'coordinador'],
+                ['Carlos Martínez Silva', 'cmartinez@ani.gov.co', 'GIT Ambiental', 'profesional']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 35 }, { wch: 15 }];
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+            XLSX.writeFile(wb, 'Plantilla_Usuarios_ANI.xlsx');
+        }
+
+        // Descargar plantilla CSV
+        function descargarPlantillaCSV() {
+            const csvContent = `Nombre Completo,Correo Electrónico,GIT,Rol
+Juan Pérez García,jperez@ani.gov.co,GIT Social,profesional
+María López Rodríguez,mlopez@ani.gov.co,GIT Predial,coordinador
+Carlos Martínez Silva,cmartinez@ani.gov.co,GIT Ambiental,profesional`;
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Plantilla_Usuarios_ANI.csv';
+            link.click();
+        }
+
+        // Procesar archivo (Excel o CSV)
+        function procesarArchivoBulk(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileName = file.name.toLowerCase();
+            
+            if (fileName.endsWith('.csv')) {
+                procesarCSV(file);
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                procesarExcel(file);
+            } else {
+                showAlert('error', '❌ Formato no soportado. Use Excel (.xlsx, .xls) o CSV');
+            }
+        }
+
+        // Procesar archivo CSV
+        function procesarCSV(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split('\n').filter(line => line.trim());
+                    const data = [];
+                    
+                    // Procesar líneas (saltar encabezado)
+                    for (let i = 1; i < lines.length; i++) {
+                        const parts = lines[i].split(',').map(p => p.trim());
+                        if (parts.length >= 4) {
+                            data.push({
+                                'Nombre Completo': parts[0],
+                                'Correo Electrónico': parts[1],
+                                'GIT': parts[2],
+                                'Rol': parts[3]
+                            });
+                        }
+                    }
+                    
+                    validarYPrepararUsuarios(data);
+                } catch (error) {
+                    showAlert('error', '❌ Error al leer CSV: ' + error.message);
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Procesar archivo Excel
+        function procesarExcel(file) {
+            if (typeof XLSX === 'undefined') {
+                showAlert('error', '❌ Error: Librería XLSX no cargada');
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    validarYPrepararUsuarios(jsonData);
+                } catch (error) {
+                    showAlert('error', '❌ Error al leer Excel: ' + error.message);
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Validar y preparar usuarios
+        function validarYPrepararUsuarios(data) {
+            usuariosBulkData = [];
+            const errores = [];
+            
+            data.forEach((row, index) => {
+                const lineNumber = index + 2;
+                const usuario = {
+                    nombre: row['Nombre Completo']?.toString().trim(),
+                    email: row['Correo Electrónico']?.toString().trim().toLowerCase(),
+                    git: row['GIT']?.toString().trim(),
+                    rol: row['Rol']?.toString().trim().toLowerCase(),
+                    password: generarPasswordSeguro(),
+                    valido: true,
+                    errores: []
+                };
+
+                // Validaciones
+                if (!usuario.nombre) {
+                    usuario.valido = false;
+                    usuario.errores.push('Nombre vacío');
+                    errores.push(`Fila ${lineNumber}: Nombre vacío`);
+                }
+
+                if (!usuario.email) {
+                    usuario.valido = false;
+                    usuario.errores.push('Email vacío');
+                    errores.push(`Fila ${lineNumber}: Email vacío`);
+                } else if (!validarEmailFormat(usuario.email)) {
+                    usuario.valido = false;
+                    usuario.errores.push('Email inválido');
+                    errores.push(`Fila ${lineNumber}: Email inválido (${usuario.email})`);
+                }
+
+                if (!usuario.git || !GITS_VALIDOS.includes(usuario.git)) {
+                    usuario.valido = false;
+                    usuario.errores.push('GIT inválido');
+                    errores.push(`Fila ${lineNumber}: GIT inválido (${usuario.git || 'vacío'})`);
+                }
+
+                if (!usuario.rol || !ROLES_VALIDOS.includes(usuario.rol)) {
+                    usuario.valido = false;
+                    usuario.errores.push('Rol inválido');
+                    errores.push(`Fila ${lineNumber}: Rol inválido (${usuario.rol || 'vacío'}). Use: profesional, coordinador, admin o superadmin`);
+                }
+
+                usuariosBulkData.push(usuario);
+            });
+
+            mostrarVistaPreviaBulk(errores);
+        }
+
+        // Validar formato de email
+        function validarEmailFormat(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Generar contraseña segura
+        function generarPasswordSeguro() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#$';
+            let password = '';
+            for (let i = 0; i < 10; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        }
+
+        // Mostrar vista previa
+        function mostrarVistaPreviaBulk(errores) {
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('previewSection').classList.remove('hidden');
+
+            const validos = usuariosBulkData.filter(u => u.valido).length;
+            const conErrores = usuariosBulkData.filter(u => !u.valido).length;
+
+            document.getElementById('bulkTotalUsuarios').textContent = usuariosBulkData.length;
+            document.getElementById('bulkUsuariosValidos').textContent = validos;
+            document.getElementById('bulkUsuariosErrores').textContent = conErrores;
+
+            // Mostrar errores
+            if (errores.length > 0) {
+                document.getElementById('erroresContainer').classList.remove('hidden');
+                const errorList = document.getElementById('errorList');
+                errorList.innerHTML = errores.map(error => 
+                    `<div class="error-item">${error}</div>`
+                ).join('');
+            }
+
+            // Llenar tabla de vista previa
+            const tbody = document.getElementById('previewBody');
+            tbody.innerHTML = usuariosBulkData.map((usuario, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${usuario.nombre || '-'}</td>
+                    <td>${usuario.email || '-'}</td>
+                    <td>${usuario.git || '-'}</td>
+                    <td>${usuario.rol || '-'}</td>
+                    <td><code style="background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${usuario.password}</code></td>
+                    <td>
+                        ${usuario.valido ? 
+                            '<span class="status-badge status-valid">✓ Válido</span>' :
+                            '<span class="status-badge status-error">✗ ' + usuario.errores.join(', ') + '</span>'
+                        }
+                    </td>
+                </tr>
+            `).join('');
+
+            // Deshabilitar botón si hay errores
+            document.getElementById('btnCrearMasivo').disabled = conErrores > 0;
+        }
+
+        // Crear usuarios masivamente
+        async function crearUsuariosMasivos() {
+            const usuariosValidos = usuariosBulkData.filter(u => u.valido);
+            
+            if (!confirm(`¿Crear ${usuariosValidos.length} usuarios?\n\nSe generarán contraseñas automáticas.`)) {
+                return;
+            }
+
+            document.getElementById('previewSection').classList.add('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+
+            const resultados = {
+                exitosos: [],
+                fallidos: []
+            };
+
+            // Obtener descripciones de GIT
+            const gitDescriptions = {
+                'Vicepresidencia Planeacion, Riesgos y Entorno': 'VICEPRESIDENCIA',
+                'GIT Planeación': 'GIT Planeación - Planeación Estratégica',
+                'GIT Planeacion': 'GIT Planeación - Planeación Estratégica',
+                'GIT Social': 'GIT Social - Gestión Social',
+                'GIT Predial': 'GIT Predial - Gestión de Predios',
+                'GIT Ambiental': 'GIT Ambiental - Gestión Ambiental',
+                'GIT Jurídico Predial': 'GIT Jurídico Predial - Gestión Legal',
+                'GIT Asesoría Jurídica': 'GIT Asesoría Jurídica - Gestión Legal',
+                'GIT Riesgos': 'GIT Riesgos - Gestión de Riesgos',
+                'GIT Valorización': 'GIT Valorización - Gestión de Valorización',
+                'GIT Valorizacion': 'GIT Valorización - Gestión de Valorización',
+                'GIT TICs': 'GIT TICs - Tecnologías de la Información',
+                'GIT TIC': 'GIT TICs - Tecnologías de la Información',
+                'Super Admin': 'Super Administrador del Sistema'
+            };
+
+            for (let i = 0; i < usuariosValidos.length; i++) {
+                const usuario = usuariosValidos[i];
+                const progreso = Math.round(((i + 1) / usuariosValidos.length) * 100);
+                
+                document.getElementById('progressBar').style.width = progreso + '%';
+                document.getElementById('progressBar').textContent = progreso + '%';
+                document.getElementById('progressText').textContent = 
+                    `Creando usuario ${i + 1} de ${usuariosValidos.length}: ${usuario.nombre}`;
+
+                try {
+                    const { data, error } = await supabase
+                        .from('usuarios')
+                        .insert([{
+                            name: usuario.nombre,
+                            email: usuario.email,
+                            password: usuario.password,
+                            role: usuario.rol,
+                            git: usuario.git,
+                            git_description: gitDescriptions[usuario.git] || usuario.git,
+                            active: true,
+                            created_at: new Date().toISOString()
+                        }]);
+
+                    if (error) throw error;
+
+                    resultados.exitosos.push({
+                        nombre: usuario.nombre,
+                        email: usuario.email,
+                        password: usuario.password,
+                        git: usuario.git
+                    });
+
+                } catch (error) {
+                    resultados.fallidos.push({
+                        nombre: usuario.nombre,
+                        email: usuario.email,
+                        error: error.message
+                    });
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            mostrarReporteBulk(resultados);
+        }
+
+        // Mostrar reporte final
+        function mostrarReporteBulk(resultados) {
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('reportSection').classList.remove('hidden');
+
+            const reportContent = document.getElementById('reportContent');
+            
+            let html = `
+                <div class="stats">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                        <div class="stat-number">${resultados.exitosos.length}</div>
+                        <div class="stat-label">Usuarios Creados</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                        <div class="stat-number">${resultados.fallidos.length}</div>
+                        <div class="stat-label">Errores</div>
+                    </div>
+                </div>
+            `;
+
+            if (resultados.exitosos.length > 0) {
+                html += `
+                    <div class="alert alert-success show" style="margin-top: 20px;">
+                        <strong>✅ Usuarios Creados Exitosamente:</strong>
+                        <table class="preview-table" style="margin-top: 15px;">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>GIT</th>
+                                    <th>Contraseña</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${resultados.exitosos.map(u => `
+                                    <tr>
+                                        <td>${u.nombre}</td>
+                                        <td>${u.email}</td>
+                                        <td>${u.git}</td>
+                                        <td><code style="background: #d4edda; padding: 4px 8px; border-radius: 4px; font-size: 11px;">${u.password}</code></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 15px;">
+                            <button onclick="descargarCredenciales()" class="btn btn-download">
+                                📥 Descargar Credenciales (Excel)
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (resultados.fallidos.length > 0) {
+                html += `
+                    <div class="alert alert-error show" style="margin-top: 20px;">
+                        <strong>❌ Errores al Crear Usuarios:</strong>
+                        <div class="error-list">
+                            ${resultados.fallidos.map(u => `
+                                <div class="error-item">
+                                    <strong>${u.nombre}</strong> (${u.email})<br>
+                                    <small>${u.error}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            reportContent.innerHTML = html;
+            window.resultadosCargaMasiva = resultados;
+            
+            // Actualizar estadísticas
+            updateStats();
+        }
+
+        // Descargar credenciales en Excel
+        function descargarCredenciales() {
+            if (typeof XLSX === 'undefined') {
+                showAlert('error', '❌ Error: Librería XLSX no cargada');
+                return;
+            }
+
+            const resultados = window.resultadosCargaMasiva;
+            if (!resultados || !resultados.exitosos.length) return;
+
+            const wb = XLSX.utils.book_new();
+            
+            const data = [
+                ['Nombre Completo', 'Correo Electrónico', 'Contraseña Temporal', 'GIT'],
+                ...resultados.exitosos.map(u => [u.nombre, u.email, u.password, u.git])
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 20 }, { wch: 35 }];
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'Credenciales');
+            
+            const fecha = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `Credenciales_Usuarios_ANI_${fecha}.xlsx`);
+        }
+
+        // Cancelar carga
+        function cancelarCarga() {
+            if (confirm('¿Cancelar la carga? Se perderán los datos procesados.')) {
+                resetearCargaMasiva();
+            }
+        }
+
+        // Resetear carga masiva
+        function resetearCargaMasiva() {
+            document.getElementById('uploadSection').classList.remove('hidden');
+            document.getElementById('previewSection').classList.add('hidden');
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('reportSection').classList.add('hidden');
+            document.getElementById('erroresContainer').classList.add('hidden');
+            document.getElementById('fileInputBulk').value = '';
+            usuariosBulkData = [];
+        }
+
+        // ============================================================================
+        // FIN DE FUNCIONES DE CARGA MASIVA
+        // ============================================================================
     </script>
 </body>
 
