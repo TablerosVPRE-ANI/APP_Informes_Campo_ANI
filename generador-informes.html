@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANI - Generador de Informes-Comisiones-VPRE </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .controls-panel {
+            background: #004884;
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary { background: #0066cc; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-word { background: #2b579a; color: white; }
+        .btn-pdf { background: #dc3545; color: white; }
+
+        select {
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 300px;
+        }
+
+        /* Estilos para el documento oficial */
+        .documento-oficial {
+            background: white;
+            width: 210mm;
+            margin: 0 auto;
+            padding: 0;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .pagina {
+            padding: 15mm 20mm;
+            min-height: 297mm;
+            position: relative;
+        }
+
+        /* Encabezado oficial */
+        .encabezado-oficial {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 2px solid #000;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .logo-ani {
+            width: 80px;
+            height: auto;
+        }
+
+        .titulo-encabezado {
+            text-align: center;
+            flex: 1;
+        }
+
+        .titulo-encabezado h2 {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0;
+            text-decoration: none;
+        }
+
+        .titulo-encabezado p {
+            font-size: 12px;
+            margin: 2px 0;
+        }
+
+        .info-documento {
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 10px;
+            font-size: 10px;
+            text-align: right;
+        }
+
+        /* Tabla de información inicial */
+        .tabla-info {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 11px;
+        }
+
+        .tabla-info td {
+            border: 1px solid #000;
+            padding: 5px;
+            vertical-align: top;
+        }
+
+        .tabla-info td:first-child {
+            font-weight: bold;
+            background: #f0f0f0;
+            width: 35%;
+        }
+
+        /* Estilos del contenido */
+        .contenido {
+            font-size: 11px;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+        .contenido h3 {
+            font-size: 12px;
+            margin: 15px 0 10px;
+            text-decoration: underline;
+        }
+
+        .contenido p {
+            margin-bottom: 10px;
+        }
+
+        .nota-pie {
+            font-size: 9px;
+            font-style: italic;
+            border-top: 1px solid #000;
+            margin-top: 10px;
+            padding-top: 5px;
+        }
+
+        .actividad-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 3px solid #004884;
+        }
+
+        .compromiso-item {
+            margin: 10px 0;
+            padding: 8px;
+            background: #f0f8ff;
+            border: 1px solid #ddd;
+        }
+
+        @media print {
+            .controls-panel { display: none; }
+            .documento-oficial { box-shadow: none; }
+            .pagina { page-break-after: always; }
+            
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        /* Agregar en la sección <style> */
+.actividad-item img {
+    display: block;
+    margin: 5px auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+@media print {
+    .actividad-item img {
+        max-width: 150px !important;
+        page-break-inside: avoid;
+    }
+    
+    .actividad-item {
+        page-break-inside: avoid;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="controls-panel">
+        <h1>Generador de Informes - Formato Oficial ANI</h1>
+        <div class="controls">
+            <select id="informeSelect">
+                <option value="">-- Seleccionar Informe --</option>
+            </select>
+            <button class="btn btn-primary" onclick="cargarInforme()">📄 Cargar</button>
+            <button class="btn btn-success" onclick="generarDocumento()">✨ Generar</button>
+            <button class="btn btn-word" onclick="exportarWord()">📝 Word</button>
+            <button class="btn btn-pdf" onclick="window.print()">📥 PDF</button>
+        </div>
+        <div id="loading" class="loading" style="display: none;">
+            Cargando desde Supabase...
+        </div>
+    </div>
+
+    <div id="documentoOficial" class="documento-oficial">
+        <div class="pagina">
+            <p style="text-align: center; color: #666; padding: 50px;">
+                Seleccione un informe para generar el documento oficial
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Configuración Supabase
+        const SUPABASE_URL = "https://frvpwkhifdoimnlcngks.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZydnB3a2hpZmRvaW1ubGNuZ2tzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczNjc0ODcsImV4cCI6MjA3Mjk0MzQ4N30.J0JQlXfMUaKCsc8I_28FmIAoext8n5b-FMhc04MfGQE";
+
+        let supabase = null;
+        let informeActual = null;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (window.supabase) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                await cargarListaInformes();
+            }
+        });
+
+        async function cargarListaInformes() {
+            if (!supabase) return;
+            
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                const { data, error } = await supabase
+                    .from('informes')
+                    .select('*')
+                    .order('fecha_creacion', { ascending: false });
+                
+                if (error) throw error;
+                
+                const select = document.getElementById('informeSelect');
+                select.innerHTML = '<option value="">-- Seleccionar Informe --</option>';
+                
+                if (data && data.length > 0) {
+                    data.forEach(informe => {
+                        const option = document.createElement('option');
+                        option.value = informe.informe_id;
+                        option.textContent = `${informe.lugar} - ${informe.fecha_salida || 'Sin fecha'}`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function cargarInforme() {
+            const informeId = document.getElementById('informeSelect').value;
+            if (!informeId) {
+                alert('Seleccione un informe');
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                const { data: informe } = await supabase
+                    .from('informes')
+                    .select('*')
+                    .eq('informe_id', informeId)
+                    .single();
+                
+                const { data: actividades } = await supabase
+                    .from('actividades')
+                    .select('*')
+                    .eq('informe_id', informeId);
+                
+                const { data: compromisos } = await supabase
+                    .from('compromisos')
+                    .select('*')
+                    .eq('informe_id', informeId);
+                
+                informeActual = {
+                    ...informe,
+                    actividades: actividades || [],
+                    compromisos: compromisos || []
+                };
+                
+                if (informe.datos_completos) {
+                    try {
+                        const datosCompletos = typeof informe.datos_completos === 'string' 
+                            ? JSON.parse(informe.datos_completos) 
+                            : informe.datos_completos;
+                        informeActual = { ...informeActual, ...datosCompletos };
+                    } catch (e) {}
+                }
+                
+                generarDocumentoOficial();
+            } catch (error) {
+                alert('Error al cargar informe');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+function generarDocumentoOficial() {
+    if (!informeActual) return;
+    
+    const fechaHoy = new Date().toLocaleDateString('es-CO');
+    const codigo = 'GADF-F-074';
+    const version = '002';
+    
+    const logoANI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRkY2NjAwIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI0MCUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtd2VpZ2h0PSJib2xkIj5BTkk8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI2NSUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCI+Q09MT01CSUE8L3RleHQ+Cjwvc3ZnPg==';
+    
+    // Procesar datos_completos si contiene las actividades con fotos
+    if (informeActual.datos_completos) {
+        try {
+            const datosCompletos = typeof informeActual.datos_completos === 'string' 
+                ? JSON.parse(informeActual.datos_completos) 
+                : informeActual.datos_completos;
+            
+            // Si las actividades en datos_completos tienen fotos, usarlas
+            if (datosCompletos.actividades) {
+                informeActual.actividades = datosCompletos.actividades;
+            }
+        } catch (e) {
+            console.log('Error procesando datos_completos:', e);
+        }
+    }
+    
+    let html = `
+        <div class="pagina">
+            <!-- Encabezado Oficial -->
+            <div class="encabezado-oficial">
+                <img src="${logoANI}" alt="ANI" class="logo-ani">
+                <div class="titulo-encabezado">
+                    <h2>INFORME DE COMISIÓN Y DESPLAZAMIENTO</h2>
+                    <p>GESTIÓN ADMINISTRATIVA Y FINANCIERA</p>
+                </div>
+                <div class="info-documento">
+                    <span>CÓDIGO</span>
+                    <span>${codigo}</span>
+                    <span>VERSIÓN</span>
+                    <span>${version}</span>
+                    <span>FECHA</span>
+                    <span>${fechaHoy}</span>
+                </div>
+            </div>
+
+            <!-- Tabla de Información -->
+            <table class="tabla-info">
+                <tr>
+                    <td>Fecha de elaboración del informe:</td>
+                    <td>${fechaHoy}</td>
+                </tr>
+                <tr>
+                    <td>Lugar de la comisión o desplazamiento:</td>
+                    <td>${informeActual.lugar || ''}</td>
+                </tr>
+                <tr>
+                    <td>Proyecto:</td>
+                    <td>${informeActual.proyecto || 'Canal del Dique'}</td>
+                </tr>
+                <tr>
+                    <td>Modo:</td>
+                    <td>Carretero</td>
+                </tr>
+                <tr>
+                    <td>Fecha salida:</td>
+                    <td>${formatearFecha(informeActual.fecha_salida)}</td>
+                    <td>Fecha regreso:</td>
+                    <td>${formatearFecha(informeActual.fecha_regreso)}</td>
+                </tr>
+                <tr>
+                    <td>Partes interesadas con las que se reúne*:</td>
+                    <td colspan="3">${informeActual.participantes?.join(', ') || 'No especificado'}</td>
+                </tr>
+            </table>
+
+            <div class="nota-pie">
+                <em>Nota: toda la información debe ser acorde con lo establecido en la solicitud de la comisión y 
+                desplazamiento, en caso de que difieran deberá justificarse en el cuerpo de este informe.</em>
+            </div>
+
+            <div class="contenido">
+                <h3>Objeto del desplazamiento</h3>
+                <p>${informeActual.objeto || ''}</p>
+
+                <h3>Actividades Desarrolladas</h3>
+                ${generarActividades()}
+
+                <h3>Compromisos Estratégicos Asumidos</h3>
+                ${generarCompromisos()}
+
+                <h3>Conclusiones</h3>
+                ${generarConclusiones()}
+                
+                ${generarRegistroFotografico()}
+                
+                <div style="margin-top: 50px; text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto;"></div>
+                    <p style="margin-top: 5px;">
+                        <strong>${informeActual.nombreFuncionario || 'FUNCIONARIO RESPONSABLE'}</strong><br>
+                        ${informeActual.perfilGIT ? `GIT ${informeActual.perfilGIT}` : ''}<br>
+                        Vicepresidencia de Planeación, Riesgos y Entorno<br>
+                        Agencia Nacional de Infraestructura
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('documentoOficial').innerHTML = html;
+}
+
+function generarActividades() {
+    if (!informeActual.actividades?.length) return '<p>No se registraron actividades.</p>';
+    
+    let html = '';
+    informeActual.actividades.forEach((act, i) => {
+        html += `
+            <div class="actividad-item">
+                <strong>${i + 1}. ${act.titulo || 'Actividad'}</strong>
+                <p><strong>Fecha:</strong> ${formatearFecha(act.fecha)}</p>
+                <p><strong>Descripción:</strong> ${act.descripcion || ''}</p>
+        `;
+        
+        // AGREGAR IMÁGENES SI EXISTEN
+        if (act.fotos && act.fotos.length > 0) {
+            html += '<p><strong>Registro Fotográfico:</strong></p>';
+            html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 10px 0;">';
+            
+            act.fotos.forEach((foto, fotoIndex) => {
+                if (foto.datos && foto.datos.startsWith('data:image')) {
+                    html += `
+                        <div style="text-align: center; page-break-inside: avoid;">
+                            <img src="${foto.datos}" 
+                                 style="width: 100%; max-width: 200px; height: auto; 
+                                        border: 1px solid #333; padding: 3px;"
+                                 alt="Evidencia ${fotoIndex + 1}">
+                            <p style="font-size: 9px; margin-top: 3px;">
+                                Imagen ${i + 1}.${fotoIndex + 1}: ${foto.nombre || `Evidencia fotográfica`}
+                            </p>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div>';
+        }
+        
+        html += '</div>';
+    });
+    return html;
+}
+
+// También agregar sección de registro fotográfico al final si hay imágenes
+function generarRegistroFotografico() {
+    let totalFotos = 0;
+    let htmlFotos = '';
+    
+    if (informeActual.actividades) {
+        informeActual.actividades.forEach((act, actIndex) => {
+            if (act.fotos && act.fotos.length > 0) {
+                totalFotos += act.fotos.length;
+            }
+        });
+    }
+    
+    if (totalFotos === 0) return '';
+    
+    return `
+        <h3>Anexo: Registro Fotográfico</h3>
+        <p>Se adjuntan ${totalFotos} evidencias fotográficas que documentan las actividades realizadas durante la comisión.</p>
+    `;
+}
+
+        function generarCompromisos() {
+            if (!informeActual.compromisos?.length) return '<p>No se establecieron compromisos.</p>';
+            
+            let html = '';
+            informeActual.compromisos.forEach(comp => {
+                html += `
+                    <div class="compromiso-item">
+                        <strong>${comp.descripcion}</strong><br>
+                        Responsable: ${comp.responsable} | Fecha: ${formatearFecha(comp.fecha_limite)}
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        function generarConclusiones() {
+            return `
+                <ol>
+                    <li>Se cumplieron los objetivos establecidos para la comisión.</li>
+                    <li>Se ejecutaron ${informeActual.actividades?.length || 0} actividades.</li>
+                    <li>Se establecieron ${informeActual.compromisos?.length || 0} compromisos.</li>
+                </ol>
+            `;
+        }
+
+        function formatearFecha(fecha) {
+            if (!fecha) return '';
+            return new Date(fecha).toLocaleDateString('es-CO');
+        }
+
+        function generarDocumento() {
+            if (!informeActual) {
+                alert('Primero cargue un informe');
+                return;
+            }
+            alert('Documento generado en formato oficial');
+        }
+
+function exportarWord() {
+    if (!informeActual) {
+        alert('Primero debe cargar un informe');
+        return;
+    }
+    
+    const fechaHoy = new Date().toLocaleDateString('es-CO');
+    const codigo = 'GADF-F-074';
+    const version = '002';
+    
+    // HTML específico para Word con estilos compatibles
+    const contenidoWord = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+              xmlns:w='urn:schemas-microsoft-com:office:word' 
+              xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+            <meta charset='utf-8'>
+            <title>Informe de Comisión ANI</title>
+            <!--[if gte mso 9]>
+            <xml>
+                <w:WordDocument>
+                    <w:View>Print</w:View>
+                    <w:Zoom>100</w:Zoom>
+                    <w:DoNotOptimizeForBrowser/>
+                </w:WordDocument>
+            </xml>
+            <![endif]-->
+            <style>
+                @page {
+                    size: 21cm 29.7cm;
+                    margin: 2cm;
+                }
+                
+                body {
+                    font-family: Arial, sans-serif;
+                    font-size: 11pt;
+                    line-height: 1.5;
+                    color: #000;
+                }
+                
+                table {
+                    border-collapse: collapse;
+                    width: 100%;
+                    margin-bottom: 20px;
+                }
+                
+                td, th {
+                    border: 1px solid black;
+                    padding: 8px;
+                    vertical-align: top;
+                }
+                
+                .header-table {
+                    width: 100%;
+                    border: 2px solid black;
+                    margin-bottom: 20px;
+                }
+                
+                .header-table td {
+                    padding: 5px;
+                    text-align: center;
+                }
+                
+                .info-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                
+                .info-table td {
+                    border: 1px solid black;
+                    padding: 5px;
+                }
+                
+                .info-table td:first-child {
+                    font-weight: bold;
+                    background-color: #f0f0f0;
+                    width: 35%;
+                }
+                
+                h1 {
+                    font-size: 14pt;
+                    font-weight: bold;
+                    text-align: center;
+                    margin: 10px 0;
+                }
+                
+                h2 {
+                    font-size: 12pt;
+                    font-weight: bold;
+                    text-align: center;
+                    margin: 8px 0;
+                }
+                
+                h3 {
+                    font-size: 11pt;
+                    font-weight: bold;
+                    text-decoration: underline;
+                    margin: 15px 0 10px 0;
+                }
+                
+                p {
+                    margin: 10px 0;
+                    text-align: justify;
+                }
+                
+                .nota {
+                    font-size: 9pt;
+                    font-style: italic;
+                    margin: 10px 0;
+                    padding-top: 10px;
+                    border-top: 1px solid black;
+                }
+                
+                .actividad {
+                    margin: 15px 0;
+                    padding: 10px;
+                    background-color: #f9f9f9;
+                }
+                
+                .compromiso {
+                    margin: 10px 0;
+                    padding: 8px;
+                    background-color: #f0f8ff;
+                    border-left: 3px solid #004884;
+                }
+                
+                .firma {
+                    margin-top: 50px;
+                    text-align: center;
+                }
+                
+                .firma-linea {
+                    border-top: 1px solid black;
+                    width: 200px;
+                    margin: 0 auto 10px auto;
+                }
+                
+                img {
+                    max-width: 300px;
+                    height: auto;
+                    margin: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            <!-- Encabezado del documento -->
+            <table class="header-table">
+                <tr>
+                    <td rowspan="3" style="width: 100px;">
+                        <strong>ANI</strong><br>
+                        <span style="font-size: 8pt;">COLOMBIA</span>
+                    </td>
+                    <td rowspan="2" style="font-size: 14pt; font-weight: bold;">
+                        INFORME DE COMISIÓN Y DESPLAZAMIENTO<br>
+                        <span style="font-size: 11pt; font-weight: normal;">GESTIÓN ADMINISTRATIVA Y FINANCIERA</span>
+                    </td>
+                    <td style="font-size: 9pt;">CÓDIGO</td>
+                    <td style="font-size: 9pt;">${codigo}</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 9pt;">VERSIÓN</td>
+                    <td style="font-size: 9pt;">${version}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                    <td style="font-size: 9pt;">FECHA</td>
+                    <td style="font-size: 9pt;">${fechaHoy}</td>
+                </tr>
+            </table>
+            
+            <!-- Tabla de información -->
+            <table class="info-table">
+                <tr>
+                    <td>Fecha de elaboración del informe:</td>
+                    <td colspan="3">${fechaHoy}</td>
+                </tr>
+                <tr>
+                    <td>Lugar de la comisión o desplazamiento:</td>
+                    <td colspan="3">${informeActual.lugar || ''}</td>
+                </tr>
+                <tr>
+                    <td>Proyecto:</td>
+                    <td colspan="3">${informeActual.proyecto || 'Canal del Dique'}</td>
+                </tr>
+                <tr>
+                    <td>Modo:</td>
+                    <td colspan="3">Carretero</td>
+                </tr>
+                <tr>
+                    <td>Fecha salida:</td>
+                    <td>${formatearFecha(informeActual.fecha_salida)}</td>
+                    <td>Fecha regreso:</td>
+                    <td>${formatearFecha(informeActual.fecha_regreso)}</td>
+                </tr>
+                <tr>
+                    <td>Partes interesadas con las que se reúne*:</td>
+                    <td colspan="3">${informeActual.participantes?.join(', ') || 'No especificado'}</td>
+                </tr>
+            </table>
+            
+            <p class="nota">
+                <em>Nota: toda la información debe ser acorde con lo establecido en la solicitud de la comisión y 
+                desplazamiento, en caso de que difieran deberá justificarse en el cuerpo de este informe.</em>
+            </p>
+            
+            <h3>Objeto del desplazamiento</h3>
+            <p>${informeActual.objeto || 'No especificado'}</p>
+            
+            <h3>Actividades Desarrolladas</h3>
+            ${generarActividadesWord()}
+            
+            <h3>Compromisos Estratégicos Asumidos</h3>
+            ${generarCompromisosWord()}
+            
+            <h3>Conclusiones</h3>
+            <ol>
+                <li>Se cumplieron los objetivos establecidos para la comisión en ${informeActual.lugar}.</li>
+                <li>Se ejecutaron ${informeActual.actividades?.length || 0} actividades durante la visita.</li>
+                <li>Se establecieron ${informeActual.compromisos?.length || 0} compromisos para seguimiento.</li>
+                <li>La información recopilada contribuye al desarrollo del proyecto ${informeActual.proyecto}.</li>
+            </ol>
+            
+            <div class="firma">
+                <div class="firma-linea"></div>
+                <p>
+                    <strong>${informeActual.nombreFuncionario || 'FUNCIONARIO RESPONSABLE'}</strong><br>
+                    ${informeActual.perfilGIT ? obtenerNombreGIT(informeActual.perfilGIT) : ''}<br>
+                    Vicepresidencia de Planeación, Riesgos y Entorno<br>
+                    Agencia Nacional de Infraestructura
+                </p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // Crear blob y descargar
+    const blob = new Blob(['\ufeff', contenidoWord], {
+        type: 'application/msword'
+    });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Informe_ANI_${informeActual.lugar}_${new Date().toISOString().split('T')[0]}.doc`;
+    link.click();
+}
+
+// Funciones auxiliares para Word
+function generarActividadesWord() {
+    if (!informeActual.actividades?.length) return '<p>No se registraron actividades.</p>';
+    
+    let html = '';
+    informeActual.actividades.forEach((act, i) => {
+        html += `
+            <div class="actividad">
+                <p><strong>${i + 1}. ${act.titulo || 'Actividad'}</strong></p>
+                <p>Fecha: ${formatearFecha(act.fecha)}</p>
+                <p>${act.descripcion || ''}</p>
+        `;
+        
+        // Agregar imágenes si existen
+        if (act.fotos && act.fotos.length > 0) {
+            html += '<p><strong>Registro Fotográfico:</strong></p>';
+            act.fotos.forEach((foto, idx) => {
+                if (foto.datos && foto.datos.startsWith('data:image')) {
+                    html += `
+                        <p style="text-align: center;">
+                            <img src="${foto.datos}" alt="Imagen ${i+1}.${idx+1}">
+                            <br>
+                            <span style="font-size: 9pt;">Imagen ${i+1}.${idx+1}: ${foto.nombre || 'Evidencia fotográfica'}</span>
+                        </p>
+                    `;
+                }
+            });
+        }
+        
+        html += '</div>';
+    });
+    return html;
+}
+
+function generarCompromisosWord() {
+    if (!informeActual.compromisos?.length) return '<p>No se establecieron compromisos.</p>';
+    
+    let html = '';
+    informeActual.compromisos.forEach(comp => {
+        html += `
+            <div class="compromiso">
+                <p><strong>${comp.descripcion}</strong></p>
+                <p>Responsable: ${comp.responsable} | Fecha límite: ${formatearFecha(comp.fecha_limite)} | Prioridad: ${comp.prioridad}</p>
+            </div>
+        `;
+    });
+    return html;
+}
+
+function obtenerNombreGIT(git) {
+    const nombres = {
+        'social': 'GIT Social',
+        'predial': 'GIT Predial',
+        'juridico_predial': 'GIT Jurídico Predial',
+        'ambiental': 'GIT Ambiental',
+        'riesgos': 'GIT Riesgos'
+    };
+    return nombres[git] || 'GIT';
+}
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
