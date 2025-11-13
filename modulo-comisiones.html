@@ -308,12 +308,24 @@
             }
         }
 
+        // Formatear el role a display name
+        const formatearRole = (role) => {
+            const roles = {
+                'coordinador': 'Coordinador/a',
+                'supervisor': 'Supervisor/a',
+                'funcionario': 'Funcionario/a',
+                'admin': 'Administrador/a',
+                'superadmin': 'Superadministrador/a'
+            };
+            return roles[role] || role;
+        };
+
         const comisionData = {
             codigo_comision: generarCodigo(),
             programacion_id: parseInt(proyectoId),
             solicitante_id: currentUser.id,
             nombre_solicitante: currentUser.name,
-            cargo: currentUser.cargo || 'Contratista',
+            cargo: formatearRole(currentUser.role),
             git_solicitante: currentUser.git,
             proyecto: nombreProyecto,
             modo: document.getElementById('modo').value || proyecto.modo,
