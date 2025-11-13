@@ -117,6 +117,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
+    // ===============================================
+    // FEATURE FLAG: Comisión Extemporánea
+    // ===============================================
+    // DESHABILITADO PARA PILOTO: Cuando se re-habilite,
+    // cambiar a: const FEATURE_EXTEMPORANEA_ENABLED = true;
+    const FEATURE_EXTEMPORANEA_ENABLED = false;
+    // ===============================================
+
     let currentUser = null;
     let proyectosDisponibles = [];
 
@@ -154,7 +162,19 @@
         const diaDelMes = hoy.getDate();
         const alerta = document.getElementById('alertaPeriodo');
         const grupoJustificacion = document.getElementById('grupoJustificacion');
-        
+
+        // NOTA: Funcionalidad de comisión extemporánea DESHABILITADA PARA PILOTO
+        if (!FEATURE_EXTEMPORANEA_ENABLED) {
+            // Mostrar siempre período normal cuando está deshabilitada
+            alerta.style.background = '#d4edda';
+            alerta.style.color = '#155724';
+            alerta.innerHTML = `✅ Período normal de solicitud (Día ${diaDelMes})`;
+            grupoJustificacion.style.display = 'none';
+            document.getElementById('justificacionExtemporanea').required = false;
+            return;
+        }
+
+        // Lógica original (cuando esté habilitada)
         if (diaDelMes <= 8) {
             alerta.style.background = '#d4edda';
             alerta.style.color = '#155724';
@@ -257,9 +277,12 @@
     function validarPeriodoCreacion() {
         const hoy = new Date();
         const diaDelMes = hoy.getDate();
-        
+
+        // NOTA: Comisión extemporánea DESHABILITADA PARA PILOTO
+        const esExtemporanea = FEATURE_EXTEMPORANEA_ENABLED ? (diaDelMes > 8) : false;
+
         return {
-            esExtemporanea: diaDelMes > 8,
+            esExtemporanea: esExtemporanea,
             dia: diaDelMes
         };
     }
@@ -269,21 +292,22 @@
         e.preventDefault();
 
         const validacion = validarPeriodoCreacion();
-        
-        // Validar justificación si es extemporánea
-        if (validacion.esExtemporanea) {
+
+        // NOTA: Validación de justificación extemporánea DESHABILITADA PARA PILOTO
+        // Cuando se re-habilite, descomentar el siguiente bloque
+        if (FEATURE_EXTEMPORANEA_ENABLED && validacion.esExtemporanea) {
             const justificacion = document.getElementById('justificacionExtemporanea').value.trim();
             if (!justificacion || justificacion.length < 50) {
                 alert('⚠️ Debe proporcionar una justificación detallada (mínimo 50 caracteres)');
                 return;
             }
-            
+
             const confirmar = confirm(
                 '⚠️ COMISIÓN EXTEMPORÁNEA\n\n' +
                 'Esta solicitud será enviada a Johanna Vélez para aprobación administrativa antes de llegar al supervisor.\n\n' +
                 '¿Desea continuar?'
             );
-            
+
             if (!confirmar) return;
         }
 
@@ -369,7 +393,8 @@
             let mensaje = `✅ Comisión programada exitosamente\n\nCódigo: ${comisionData.codigo_comision}\n\n`;
             mensaje += '📋 La comisión ha sido enviada a Johanna Vélez para revisión y aprobación final.';
 
-            if (validacion.esExtemporanea) {
+            // NOTA: Mensaje de extemporánea DESHABILITADO PARA PILOTO
+            if (FEATURE_EXTEMPORANEA_ENABLED && validacion.esExtemporanea) {
                 mensaje += '\n\n⚠️ COMISIÓN EXTEMPORÁNEA\n' +
                           'Se ha incluido la justificación para revisión.';
             }
@@ -459,7 +484,8 @@
                         <tbody>
                 `;
                 solicitudes.forEach(sol => {
-                    const badge = sol.es_extemporanea ? ' <span style="background:#ff9800;color:white;padding:2px 6px;border-radius:3px;font-size:11px;">EXTMP</span>' : '';
+                    // NOTA: Badge de extemporánea DESHABILITADO PARA PILOTO
+                    const badge = (FEATURE_EXTEMPORANEA_ENABLED && sol.es_extemporanea) ? ' <span style="background:#ff9800;color:white;padding:2px 6px;border-radius:3px;font-size:11px;">EXTMP</span>' : '';
 
                     // NUEVO: Mostrar botón de edición si está rechazada por Johanna
                     let btnAccion = `<button onclick="verDetalle('${sol.codigo_comision}')">👁️ Ver</button>`;
@@ -542,8 +568,8 @@
             document.getElementById('areasAcompanan').value = solicitud.areas_acompanan || '';
             document.getElementById('observaciones').value = solicitud.observaciones || '';
 
-            // Si es extemporánea, mostrar campo de justificación
-            if (solicitud.es_extemporanea) {
+            // Si es extemporánea, mostrar campo de justificación (DESHABILITADO PARA PILOTO)
+            if (FEATURE_EXTEMPORANEA_ENABLED && solicitud.es_extemporanea) {
                 document.getElementById('grupoJustificacion').style.display = 'block';
                 document.getElementById('justificacionExtemporanea').value = solicitud.justificacion_extemporanea || '';
             }
