@@ -526,6 +526,122 @@
             }
         }
 
+        // NUEVA FUNCIÓN: Cargar historial de comisiones aprobadas y rechazadas
+        async function cargarHistorial() {
+            const contenedor = document.getElementById('historialAprobaciones');
+
+            try {
+                if (window.supabase) {
+                    // Obtener todas las comisiones aprobadas o rechazadas
+                    const { data, error } = await supabase
+                        .from('comisiones_flujo')
+                        .select('*')
+                        .in('estado', ['aprobado_final', 'rechazado_por_johanna', 'rechazado_final'])
+                        .order('fecha_aprobacion_johanna', { ascending: false });
+
+                    if (!error && data && data.length > 0) {
+                        let html = `
+                            <div style="margin-bottom: 20px;">
+                                <button onclick="descargarHistorial()" style="background: #004884; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                    📥 Descargar Historial (CSV)
+                                </button>
+                            </div>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f5f5f5;">
+                                        <th style="padding: 12px; text-align: left;">Código</th>
+                                        <th style="padding: 12px; text-align: left;">Proyecto</th>
+                                        <th style="padding: 12px; text-align: left;">Solicitante</th>
+                                        <th style="padding: 12px; text-align: left;">GIT</th>
+                                        <th style="padding: 12px; text-align: center;">Fechas</th>
+                                        <th style="padding: 12px; text-align: center;">Estado</th>
+                                        <th style="padding: 12px; text-align: center;">Fecha Aprobación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+
+                        data.forEach(comision => {
+                            const estadoBadge = comision.estado === 'aprobado_final'
+                                ? '<span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 12px;">✅ Aprobado</span>'
+                                : '<span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 12px;">❌ Rechazado</span>';
+
+                            const fechaAprobacion = comision.fecha_aprobacion_johanna
+                                ? new Date(comision.fecha_aprobacion_johanna).toLocaleDateString('es-CO')
+                                : 'N/A';
+
+                            html += `
+                                <tr style="border-bottom: 1px solid #e0e0e0;">
+                                    <td style="padding: 12px;">${comision.codigo_comision}</td>
+                                    <td style="padding: 12px;">${comision.proyecto}</td>
+                                    <td style="padding: 12px;">${comision.nombre_solicitante}</td>
+                                    <td style="padding: 12px;">${comision.git_solicitante}</td>
+                                    <td style="padding: 12px; text-align: center;">${comision.fecha_inicio} al ${comision.fecha_fin}</td>
+                                    <td style="padding: 12px; text-align: center;">${estadoBadge}</td>
+                                    <td style="padding: 12px; text-align: center;">${fechaAprobacion}</td>
+                                </tr>
+                            `;
+                        });
+
+                        html += '</tbody></table>';
+                        contenedor.innerHTML = html;
+
+                        // Guardar datos en variable global para descarga
+                        window.datosHistorial = data;
+                    } else {
+                        contenedor.innerHTML = '<p style="text-align: center; color: #666;">No hay comisiones en el historial</p>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                contenedor.innerHTML = '<p style="color: red;">Error al cargar historial</p>';
+            }
+        }
+
+        // NUEVA FUNCIÓN: Descargar historial en CSV
+        function descargarHistorial() {
+            if (!window.datosHistorial || window.datosHistorial.length === 0) {
+                alert('No hay datos para descargar');
+                return;
+            }
+
+            // Crear encabezados CSV
+            const headers = ['Código', 'Proyecto', 'Solicitante', 'GIT', 'Fecha Inicio', 'Fecha Fin', 'Municipio', 'Estado', 'Fecha Aprobación', 'Comentario'];
+
+            // Crear filas CSV
+            const rows = window.datosHistorial.map(com => [
+                com.codigo_comision,
+                com.proyecto,
+                com.nombre_solicitante,
+                com.git_solicitante,
+                com.fecha_inicio,
+                com.fecha_fin,
+                com.municipio,
+                com.estado === 'aprobado_final' ? 'Aprobado' : 'Rechazado',
+                com.fecha_aprobacion_johanna ? new Date(com.fecha_aprobacion_johanna).toLocaleDateString('es-CO') : 'N/A',
+                com.johanna_comentario || ''
+            ]);
+
+            // Crear contenido CSV
+            let csv = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+            });
+
+            // Descargar archivo
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+
+            link.setAttribute('href', url);
+            link.setAttribute('download', `historial_comisiones_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         function volverAlHub() {
             window.location.href = 'hub.html';
         }
