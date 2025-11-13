@@ -174,19 +174,18 @@
     // NUEVA FUNCIÓN: Cargar proyectos del catálogo general
     async function cargarProyectosDisponibles() {
         try {
-            const mesActual = obtenerMesYear();
-            
+            // ACTUALIZADO: Cargar catálogo general sin filtrar por mes
+            // Los proyectos son permanentes y disponibles siempre
             const { data, error } = await supabase
                 .from('programacion_mensual')
                 .select('*')
                 .eq('git', 'GENERAL')
-                .eq('mes_year', mesActual)
                 .eq('activo', true)
                 .order('modo', { ascending: true })
                 .order('proyecto', { ascending: true });
-            
+
             if (error) throw error;
-            
+
             proyectosDisponibles = data || [];
             
             const select = document.getElementById('proyectoSelect');
