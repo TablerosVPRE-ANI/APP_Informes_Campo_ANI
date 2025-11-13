@@ -174,12 +174,14 @@
     // NUEVA FUNCIÓN: Cargar proyectos del catálogo general
     async function cargarProyectosDisponibles() {
         try {
-            // ACTUALIZADO: Cargar catálogo general sin filtrar por mes
-            // Los proyectos son permanentes y disponibles siempre
+            // ACTUALIZADO: Cargar proyectos según el GIT del usuario actual
+            const gitUsuario = currentUser.git;
+            console.log(`🔍 Cargando proyectos para GIT: ${gitUsuario}`);
+
             const { data, error } = await supabase
                 .from('programacion_mensual')
                 .select('*')
-                .eq('git', 'GENERAL')
+                .eq('git', gitUsuario)
                 .eq('activo', true)
                 .order('modo', { ascending: true })
                 .order('proyecto', { ascending: true });
