@@ -279,7 +279,7 @@
                                     <div style="flex: 1;">
                                         <h3 style="color: #004884; margin: 0 0 10px 0;">${sol.proyecto}</h3>
                                         <p><strong>Código:</strong> ${sol.codigo_comision}</p>
-                                        <p><strong>GIT:</strong> ${sol.git}</p>
+                                        <p><strong>GIT:</strong> ${sol.git_solicitante}</p>
                                         <p><strong>Solicitante:</strong> ${sol.nombre_solicitante}</p>
                                         <p><strong>Fechas:</strong> ${sol.fecha_inicio} al ${sol.fecha_fin} (${sol.dias_comision} días)</p>
                                         <p style="margin-top: 8px;">
@@ -335,8 +335,8 @@
                 <div style="display: grid; gap: 10px;">
                     <p><strong>Código:</strong> ${comision.codigo_comision}</p>
                     <p><strong>Proyecto:</strong> ${comision.proyecto}</p>
-                    <p><strong>Solicitante:</strong> ${comision.solicitante_nombre} - ${comision.cargo}</p>
-                    <p><strong>GIT:</strong> ${comision.git}</p>
+                    <p><strong>Solicitante:</strong> ${comision.nombre_solicitante} - ${comision.cargo}</p>
+                    <p><strong>GIT:</strong> ${comision.git_solicitante}</p>
                     <p><strong>Municipio:</strong> ${comision.municipio}</p>
                     <p><strong>Fechas:</strong> ${comision.fecha_inicio} al ${comision.fecha_fin} (${comision.dias_comision} días)</p>
                     <p><strong>Objeto de la visita:</strong><br>${comision.objeto_visita}</p>
