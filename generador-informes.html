@@ -179,6 +179,63 @@
             padding: 20px;
             color: #666;
         }
+
+        /* Modal para comisiones pendientes */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #004884;
+            padding-bottom: 10px;
+        }
+
+        .close-modal {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .comision-pendiente-item {
+            background: #f9f9f9;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+
+        .comision-pendiente-item:hover {
+            background: #fff3e0;
+        }
         /* Agregar en la sección <style> */
 .actividad-item img {
     display: block;
@@ -201,6 +258,17 @@
 <body>
     <div class="controls-panel">
         <h1>Generador de Informes - Formato Oficial ANI</h1>
+        <div id="alertaInformesNuevos" style="display: none; background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ff9800;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>⚠️ Informes Pendientes:</strong> <span id="contadorInformesPendientes">0</span> comisión(es) aprobada(s) sin informe.
+                </div>
+                <div>
+                    <button onclick="mostrarComisionesPendientes()" style="background: #ff9800; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; margin-right: 5px;">Ver Pendientes</button>
+                    <button onclick="verificarInformesNuevos()" style="background: #28a745; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">🔄 Actualizar</button>
+                </div>
+            </div>
+        </div>
         <div class="controls">
             <select id="informeSelect">
                 <option value="">-- Seleccionar Informe --</option>
@@ -223,6 +291,17 @@
         </div>
     </div>
 
+    <!-- Modal para mostrar comisiones pendientes -->
+    <div id="modalPendientes" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: #004884; margin: 0;">📋 Comisiones Aprobadas Sin Informe</h2>
+                <button class="close-modal" onclick="cerrarModalPendientes()">×</button>
+            </div>
+            <div id="listaPendientes"></div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // Configuración Supabase
@@ -231,30 +310,139 @@
 
         let supabase = null;
         let informeActual = null;
+        let comisionesPendientes = [];
 
         window.addEventListener('DOMContentLoaded', async () => {
             if (window.supabase) {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 await cargarListaInformes();
+                await verificarInformesNuevos();
+            }
+        });
+
+        // Función para verificar comisiones aprobadas sin informe
+        async function verificarInformesNuevos() {
+            if (!supabase) return;
+
+            try {
+                // 1. Obtener todas las comisiones aprobadas
+                const { data: comisionesAprobadas, error: errorComisiones } = await supabase
+                    .from('comisiones_flujo')
+                    .select('*')
+                    .in('estado', ['aprobado_final', 'aprobado_supervisor'])
+                    .order('created_at', { ascending: false });
+
+                if (errorComisiones) throw errorComisiones;
+
+                // 2. Obtener todos los informes existentes
+                const { data: informes, error: errorInformes } = await supabase
+                    .from('informes')
+                    .select('codigo_comision');
+
+                if (errorInformes) throw errorInformes;
+
+                // 3. Crear un Set de códigos de comisión que ya tienen informe
+                const informesCreados = new Set(informes.map(inf => inf.codigo_comision));
+
+                // 4. Filtrar comisiones que NO tienen informe
+                comisionesPendientes = comisionesAprobadas.filter(
+                    comision => !informesCreados.has(comision.codigo_comision)
+                );
+
+                // 5. Actualizar el indicador visual
+                if (comisionesPendientes.length > 0) {
+                    document.getElementById('alertaInformesNuevos').style.display = 'block';
+                    document.getElementById('contadorInformesPendientes').textContent = comisionesPendientes.length;
+                    console.log(`⚠️ ${comisionesPendientes.length} comisión(es) pendiente(s) de informe`);
+                } else {
+                    document.getElementById('alertaInformesNuevos').style.display = 'none';
+                    console.log('✅ Todas las comisiones aprobadas tienen informe');
+                }
+
+            } catch (error) {
+                console.error('Error verificando informes nuevos:', error);
+            }
+        }
+
+        // Función para mostrar la lista de comisiones pendientes
+        function mostrarComisionesPendientes() {
+            if (comisionesPendientes.length === 0) {
+                alert('No hay comisiones pendientes de informe');
+                return;
+            }
+
+            let html = `
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p style="margin: 0;">
+                        <strong>💡 Total de comisiones pendientes:</strong> ${comisionesPendientes.length}<br>
+                        <span style="font-size: 14px; color: #666;">
+                            Estas comisiones han sido aprobadas pero aún no tienen informe creado.
+                        </span>
+                    </p>
+                </div>
+            `;
+
+            comisionesPendientes.forEach((comision, index) => {
+                html += `
+                    <div class="comision-pendiente-item">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 10px 0; color: #004884;">
+                                    ${index + 1}. ${comision.codigo_comision}
+                                </h3>
+                                <p style="margin: 5px 0; font-size: 14px;">
+                                    <strong>📍 Proyecto:</strong> ${comision.proyecto} - ${comision.municipio}<br>
+                                    <strong>📅 Fechas:</strong> ${formatearFecha(comision.fecha_inicio)} al ${formatearFecha(comision.fecha_fin)}<br>
+                                    <strong>👤 Responsable:</strong> ${comision.nombre_solicitante} (${comision.git_solicitante})<br>
+                                    <strong>📝 Objeto:</strong> ${comision.objeto_visita || 'No especificado'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                    <p style="margin: 0; color: #856404;">
+                        <strong>⚠️ Acción requerida:</strong> Debe crear un informe para cada una de estas comisiones aprobadas.
+                        Los informes deben ser creados en la aplicación correspondiente.
+                    </p>
+                </div>
+            `;
+
+            document.getElementById('listaPendientes').innerHTML = html;
+            document.getElementById('modalPendientes').style.display = 'flex';
+        }
+
+        function cerrarModalPendientes() {
+            document.getElementById('modalPendientes').style.display = 'none';
+        }
+
+        // Cerrar modal al hacer clic fuera de él
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('modalPendientes');
+            if (event.target === modal) {
+                cerrarModalPendientes();
             }
         });
 
         async function cargarListaInformes() {
             if (!supabase) return;
-            
+
             document.getElementById('loading').style.display = 'block';
-            
+
             try {
                 const { data, error } = await supabase
                     .from('informes')
                     .select('*')
                     .order('fecha_creacion', { ascending: false });
-                
+
                 if (error) throw error;
-                
+
                 const select = document.getElementById('informeSelect');
                 select.innerHTML = '<option value="">-- Seleccionar Informe --</option>';
-                
+
                 if (data && data.length > 0) {
                     data.forEach(informe => {
                         const option = document.createElement('option');
@@ -263,6 +451,9 @@
                         select.appendChild(option);
                     });
                 }
+
+                // Actualizar verificación de informes pendientes después de cargar
+                await verificarInformesNuevos();
             } catch (error) {
                 console.error('Error:', error);
             } finally {
