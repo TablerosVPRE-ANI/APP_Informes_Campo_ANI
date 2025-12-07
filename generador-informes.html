@@ -325,6 +325,8 @@
             if (!supabase) return;
 
             try {
+                console.log('🔍 Verificando comisiones aprobadas sin informe...');
+
                 // 1. Obtener todas las comisiones aprobadas
                 const { data: comisionesAprobadas, error: errorComisiones } = await supabase
                     .from('comisiones_flujo')
@@ -332,22 +334,62 @@
                     .in('estado', ['aprobado_final', 'aprobado_supervisor'])
                     .order('created_at', { ascending: false });
 
-                if (errorComisiones) throw errorComisiones;
+                if (errorComisiones) {
+                    console.error('Error al obtener comisiones:', errorComisiones);
+                    throw errorComisiones;
+                }
 
-                // 2. Obtener todos los informes existentes
+                console.log(`📋 Comisiones aprobadas encontradas: ${comisionesAprobadas?.length || 0}`);
+
+                // 2. Obtener todos los informes existentes (sin filtrar por codigo_comision ya que no existe en la tabla)
                 const { data: informes, error: errorInformes } = await supabase
                     .from('informes')
-                    .select('codigo_comision');
+                    .select('informe_id, lugar, proyecto, fecha_salida, datos_completos');
 
-                if (errorInformes) throw errorInformes;
+                if (errorInformes) {
+                    console.error('Error al obtener informes:', errorInformes);
+                    // Si la tabla no existe o está vacía, asumimos que no hay informes
+                    comisionesPendientes = comisionesAprobadas || [];
+                } else {
+                    console.log(`📄 Informes existentes: ${informes?.length || 0}`);
 
-                // 3. Crear un Set de códigos de comisión que ya tienen informe
-                const informesCreados = new Set(informes.map(inf => inf.codigo_comision));
+                    // 3. Crear un Set de identificadores únicos de informes (por proyecto + lugar + fecha)
+                    const informesCreados = new Set();
 
-                // 4. Filtrar comisiones que NO tienen informe
-                comisionesPendientes = comisionesAprobadas.filter(
-                    comision => !informesCreados.has(comision.codigo_comision)
-                );
+                    if (informes && informes.length > 0) {
+                        informes.forEach(inf => {
+                            // Intentar obtener codigo_comision de datos_completos si existe
+                            let codigoComision = null;
+
+                            if (inf.datos_completos) {
+                                const datos = typeof inf.datos_completos === 'string'
+                                    ? JSON.parse(inf.datos_completos)
+                                    : inf.datos_completos;
+                                codigoComision = datos.codigo_comision || datos.codigoComision;
+                            }
+
+                            if (codigoComision) {
+                                informesCreados.add(codigoComision);
+                            } else {
+                                // Crear identificador único basado en lugar+proyecto+fecha
+                                const key = `${inf.proyecto}_${inf.lugar}_${inf.fecha_salida}`.toLowerCase();
+                                informesCreados.add(key);
+                            }
+                        });
+                    }
+
+                    // 4. Filtrar comisiones que NO tienen informe
+                    comisionesPendientes = (comisionesAprobadas || []).filter(comision => {
+                        // Verificar por codigo_comision
+                        if (informesCreados.has(comision.codigo_comision)) {
+                            return false;
+                        }
+
+                        // Si no se encuentra por código, verificar por proyecto+lugar+fecha
+                        const key = `${comision.proyecto}_${comision.municipio}_${comision.fecha_inicio}`.toLowerCase();
+                        return !informesCreados.has(key);
+                    });
+                }
 
                 // 5. Actualizar el indicador visual
                 if (comisionesPendientes.length > 0) {
@@ -361,6 +403,8 @@
 
             } catch (error) {
                 console.error('Error verificando informes nuevos:', error);
+                // No mostrar alerta si hay error, solo loguear
+                document.getElementById('alertaInformesNuevos').style.display = 'none';
             }
         }
 
